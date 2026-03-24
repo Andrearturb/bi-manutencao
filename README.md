@@ -12,16 +12,33 @@ Projeto em duas frentes:
 2. Frontend:
 - Copie `frontend/.env.example` para `frontend/.env.local`.
 
-## Subir backend com Docker
+## Rodar com Docker (Recomendado)
+
+Suba a stack completa (Postgres + Backend + Frontend):
 
 ```bash
 docker compose up -d
 ```
 
-API principal para o front:
-- `GET http://localhost:8000/dashboard/manutencao`
+Acesse:
+- Frontend: `http://localhost:3000/chamados`
+- Backend API: `http://localhost:8000/dashboard/manutencao`
+- API Docs: `http://localhost:8000/docs`
 
-## Rodar frontend
+Para parar:
+```bash
+docker compose down
+```
+
+## Rodar localmente (Desenvolvimento)
+
+### Backend com Docker
+
+```bash
+docker compose up -d
+```
+
+### Frontend em modo desenvolvimento
 
 ```bash
 cd frontend
@@ -31,3 +48,4 @@ npm run dev
 
 Acesse:
 - `http://localhost:3000/chamados`
+- API: `http://localhost:8000/dashboard/manutencao`
