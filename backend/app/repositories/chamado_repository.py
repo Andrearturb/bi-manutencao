@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models.chamado_importado import ChamadoImportado
+from app.models.chamado_tratado import ChamadoTratado
 
 
 class ChamadoRepository:
@@ -18,10 +18,10 @@ class ChamadoRepository:
         nome_arquivo: str,
         upload_data: datetime,
     ) -> None:
-        self.db.execute(delete(ChamadoImportado))
+        self.db.execute(delete(ChamadoTratado))
 
         for registro in registros:
-            chamado = ChamadoImportado(
+            chamado = ChamadoTratado(
                 upload_data=upload_data,
                 nome_arquivo=nome_arquivo,
                 **registro,
@@ -30,6 +30,6 @@ class ChamadoRepository:
 
         self.db.commit()
 
-    def listar_todos(self) -> list[ChamadoImportado]:
-        query = select(ChamadoImportado).order_by(ChamadoImportado.id.asc())
+    def listar_todos(self) -> list[ChamadoTratado]:
+        query = select(ChamadoTratado).order_by(ChamadoTratado.id.asc())
         return self.db.execute(query).scalars().all()

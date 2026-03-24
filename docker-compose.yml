@@ -3,7 +3,6 @@ name: bi_manutencao
 services:
   db:
     image: postgres:16
-    container_name: bi_manutencao_db
     environment:
       POSTGRES_DB: bi_manutencao
       POSTGRES_USER: postgres
@@ -21,11 +20,11 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: bi_manutencao_backend
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/bi_manutencao
       APP_NAME: BI Manutenção API
       APP_VERSION: 0.1.0
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
     ports:
       - "8000:8000"
     depends_on:
