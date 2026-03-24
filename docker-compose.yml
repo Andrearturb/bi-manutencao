@@ -1,0 +1,40 @@
+name: bi_manutencao
+
+services:
+  db:
+    image: postgres:16
+    container_name: bi_manutencao_db
+    environment:
+      POSTGRES_DB: bi_manutencao
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bi_manutencao"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: bi_manutencao_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/bi_manutencao
+      APP_NAME: BI Manutenção API
+      APP_VERSION: 0.1.0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+    name: bi_manutencao_postgres_data
