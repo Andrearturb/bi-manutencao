@@ -12,6 +12,8 @@ function normalize(value: string | null | undefined): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+
+    
 }
 
 export function parseDate(value: string | null | undefined): Date | null {
