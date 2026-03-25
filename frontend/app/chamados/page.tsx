@@ -8,6 +8,7 @@ import {
   calcSlaMetrics,
   countBy,
   countConcluidos,
+  countTotalOs,
   countStatus,
   filterDados,
   monthlySeries,
@@ -113,7 +114,7 @@ export default function ChamadosPage() {
   }, [analystFiltered, selectedPeriod]);
 
   const totalChamados = filtered.length;
-  const totalOS = new Set(filtered.map((item) => item.ticket).filter(Boolean)).size;
+  const totalOS = countTotalOs(filtered);
   const custoMedio = calcCustoMedio(filtered);
   const slaMetrics = calcSlaMetrics(filtered);
 

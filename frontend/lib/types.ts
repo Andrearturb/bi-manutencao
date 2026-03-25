@@ -13,6 +13,10 @@ export type DashboardItem = {
   fornecedor?: string | null;
   descricaoServico?: string | null;
   solucao?: string | null;
+  os?: {
+    status?: string | null;
+    url?: string | null;
+  } | null;
   dataRequisicao?: string | null;
   dataConclusao?: string | null;
   valorAprovado?: number | string | null;

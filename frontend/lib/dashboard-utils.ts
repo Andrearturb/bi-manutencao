@@ -140,6 +140,13 @@ export function countConcluidos(dados: DashboardItem[]): number {
   return dados.filter((item) => STATUS_ENCERRADOS.includes(normalize(item.status))).length;
 }
 
+export function countTotalOs(dados: DashboardItem[]): number {
+  return dados.filter((item) => {
+    const osStatus = normalize(item.os?.status);
+    return osStatus === "pendente" || osStatus === "concluido";
+  }).length;
+}
+
 export type MonthlyPoint = {
   key: string;
   mes: string;
