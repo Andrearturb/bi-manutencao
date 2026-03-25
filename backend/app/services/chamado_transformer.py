@@ -1,7 +1,7 @@
 import math
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -61,6 +61,20 @@ class ChamadoTransformer:
         if isinstance(valor, datetime):
             return valor
 
+        # Algumas planilhas trazem data como serial numerico do Excel.
+        if isinstance(valor, (int, float)) and not isinstance(valor, bool):
+            if isinstance(valor, float) and math.isnan(valor):
+                return None
+
+            serial = float(valor)
+            if serial <= 0:
+                return None
+
+            try:
+                return datetime(1899, 12, 30) + timedelta(days=serial)
+            except (OverflowError, ValueError):
+                return None
+
         texto = self.normalizar_texto(valor)
         if not texto:
             return None
@@ -77,6 +91,22 @@ class ChamadoTransformer:
                 return datetime.strptime(texto, formato)
             except ValueError:
                 continue
+
+        # Quando a data vem como serial do Excel em texto (ex.: "45678" ou "45678,0").
+        if re.fullmatch(r"\d+(?:[\.,]\d+)?", texto):
+            try:
+                serial = float(texto.replace(",", "."))
+                if serial > 0:
+                    return datetime(1899, 12, 30) + timedelta(days=serial)
+            except ValueError:
+                pass
+
+        # Fallback para valores ISO com timezone ou fracoes de segundo.
+        try:
+            iso_texto = texto.replace("Z", "+00:00")
+            return datetime.fromisoformat(iso_texto)
+        except ValueError:
+            pass
 
         return None
 

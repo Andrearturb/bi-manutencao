@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchDashboardCorretivas } from "@/lib/api";
 import {
   calcCustoMedio,
-  calcSlaPercent,
+  calcSlaMetrics,
   countBy,
   countConcluidos,
   countStatus,
@@ -28,6 +28,8 @@ const DEFAULT_FILTERS: FilterState = {
 export default function ChamadosPage() {
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [selectedAnalyst, setSelectedAnalyst] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +61,7 @@ export default function ChamadosPage() {
   const mesOptions = useMemo(() => {
     const values = new Set<string>();
     for (const item of dados) {
-      const date = parseDate(item.dataRequisicao ?? item.dataConclusao);
+      const date = parseDate(item.dataRequisicao);
       if (!date) continue;
       values.add(String(date.getMonth() + 1).padStart(2, "0"));
     }
@@ -69,19 +71,51 @@ export default function ChamadosPage() {
   const anoOptions = useMemo(() => {
     const values = new Set<string>();
     for (const item of dados) {
-      const date = parseDate(item.dataRequisicao ?? item.dataConclusao);
+      const date = parseDate(item.dataRequisicao);
       if (!date) continue;
       values.add(String(date.getFullYear()));
     }
     return [...values].sort((a, b) => Number(b) - Number(a));
   }, [dados]);
 
-  const filtered = useMemo(() => filterDados(dados, filters), [dados, filters]);
+  const baseFiltered = useMemo(() => filterDados(dados, filters), [dados, filters]);
+
+  const analistasRank = useMemo(
+    () => countBy(baseFiltered, (item) => item.analistaResponsavel ?? "Sem analista").slice(0, 5),
+    [baseFiltered],
+  );
+
+  const analystFiltered = useMemo(() => {
+    if (!selectedAnalyst) return baseFiltered;
+
+    const norm = (value: string | null | undefined) =>
+      (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    const target = norm(selectedAnalyst);
+    return baseFiltered.filter((item) => norm(item.analistaResponsavel ?? "Sem analista") === target);
+  }, [baseFiltered, selectedAnalyst]);
+
+  const series = monthlySeries(analystFiltered);
+
+  const filtered = useMemo(() => {
+    if (!selectedPeriod) return analystFiltered;
+
+    return analystFiltered.filter((item) => {
+      const date = parseDate(item.dataRequisicao);
+      if (!date) return false;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      return key === selectedPeriod;
+    });
+  }, [analystFiltered, selectedPeriod]);
 
   const totalChamados = filtered.length;
   const totalOS = new Set(filtered.map((item) => item.ticket).filter(Boolean)).size;
   const custoMedio = calcCustoMedio(filtered);
-  const slaPercent = calcSlaPercent(filtered);
+  const slaMetrics = calcSlaMetrics(filtered);
 
   const statusEmAberto = countStatus(filtered, "Em aberto");
   const statusEmAtendimento = countStatus(filtered, "Em atendimento");
@@ -91,11 +125,77 @@ export default function ChamadosPage() {
 
   const lojasRank = countBy(filtered, (item) => item.loja ?? "Sem loja").slice(0, 8);
   const categoriasRank = countBy(filtered, (item) => item.categoria ?? "Sem categoria").slice(0, 8);
-  const analistasRank = countBy(filtered, (item) => item.analistaResponsavel ?? "Sem analista").slice(0, 5);
-  const topAnalista = analistasRank[0];
 
-  const series = monthlySeries(filtered);
+  const analystPalette = ["#2b8be8", "#2034a8", "#6a1f8f", "#d86a31", "#0f766e"];
+  const analystSlices = useMemo(() => {
+    const base = analistasRank.filter((item) => item.qtd > 0);
+    const total = base.reduce((acc, item) => acc + item.qtd, 0);
+    if (total === 0) return [];
+
+    let accPct = 0;
+    return base.map((item, index) => {
+      const pct = (item.qtd / total) * 100;
+      const start = accPct;
+      const end = start + pct;
+      accPct = end;
+
+      return {
+        ...item,
+        start,
+        end,
+        mid: (start + end) / 2,
+        color: analystPalette[index % analystPalette.length],
+      };
+    });
+  }, [analistasRank]);
+
+  const donutBackground =
+    analystSlices.length > 0
+      ? `conic-gradient(${analystSlices.map((item) => `${item.color} ${item.start}% ${item.end}%`).join(", ")})`
+      : "#d7e0ea";
+
+  function handleDonutClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (analystSlices.length === 0) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+
+    const outerRadius = rect.width / 2;
+    const innerRadius = outerRadius * 0.33;
+    const distance = Math.hypot(dx, dy);
+
+    // So considera clique na area do anel.
+    if (distance < innerRadius || distance > outerRadius) return;
+
+    const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
+    const fromTopClockwise = (angleDeg + 90 + 360) % 360;
+    const pct = (fromTopClockwise / 360) * 100;
+
+    const hit = analystSlices.find((slice) => pct >= slice.start && pct < slice.end) ?? analystSlices[analystSlices.length - 1];
+
+    setSelectedAnalyst((prev) => (prev === hit.label ? null : hit.label));
+  }
+
+  useEffect(() => {
+    if (!selectedAnalyst) return;
+    const exists = analistasRank.some((item) => item.label === selectedAnalyst);
+    if (!exists) {
+      setSelectedAnalyst(null);
+    }
+  }, [analistasRank, selectedAnalyst]);
+
   const maxSeries = Math.max(1, ...series.map((item) => item.total));
+
+  useEffect(() => {
+    if (!selectedPeriod) return;
+    const exists = series.some((item) => item.key === selectedPeriod);
+    if (!exists) {
+      setSelectedPeriod(null);
+    }
+  }, [series, selectedPeriod]);
 
   const uploadData = dashboard?.upload?.uploadData
     ? new Date(dashboard.upload.uploadData).toLocaleString("pt-BR")
@@ -144,7 +244,11 @@ export default function ChamadosPage() {
           <KpiCard title="Total de Chamados" value={String(totalChamados)} />
           <KpiCard title="Total de O.S" value={String(totalOS)} />
           <KpiCard title="Custo Medio Servico" value={`R$ ${custoMedio.toLocaleString("pt-BR")}`} />
-          <KpiCard title="SLA %" value={`${slaPercent}%`} />
+          <KpiCard
+            title="SLA %"
+            value={`${slaMetrics.percent}%`}
+            subtitle={`No prazo ${slaMetrics.noPrazo} / ${slaMetrics.totalConsiderado} considerados`}
+          />
         </section>
 
         <section className="kpi-grid status-kpis">
@@ -161,30 +265,84 @@ export default function ChamadosPage() {
 
           <article className="card donut-card">
             <h3>Chamados por Analistas</h3>
+            {selectedAnalyst ? (
+              <button type="button" className="analyst-filter-pill" onClick={() => setSelectedAnalyst(null)}>
+                Analista: {selectedAnalyst} (limpar)
+              </button>
+            ) : null}
             <div className="donut-wrap">
-              <div
-                className="donut"
-                style={{ ["--pct" as string]: `${Math.round((topAnalista?.pct ?? 0) * 100) / 100}` }}
-              >
-                <span>{topAnalista?.qtd ?? 0}</span>
+              <div className="donut multi" style={{ background: donutBackground }} onClick={handleDonutClick}>
+                {analystSlices.map((item) => {
+                  const angle = ((item.mid / 100) * 360 - 90) * (Math.PI / 180);
+                  const radius = item.pct < 8 ? 46 : 42;
+                  const x = 50 + Math.cos(angle) * radius;
+                  const y = 50 + Math.sin(angle) * radius;
+                  const isActive = selectedAnalyst === item.label;
+                  const isMuted = Boolean(selectedAnalyst && !isActive);
+
+                  return (
+                    <div key={`slice-${item.label}`}>
+                      {item.pct >= 8 ? (
+                        <button
+                          type="button"
+                          className={`slice-label ${isMuted ? "muted" : ""}`}
+                          style={{ left: `${x}%`, top: `${y}%` }}
+                          onClick={() => setSelectedAnalyst((prev) => (prev === item.label ? null : item.label))}
+                          aria-label={`Filtrar por ${item.label}`}
+                        >
+                          {item.qtd}
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+                <span className="donut-center" />
               </div>
             </div>
-            <ul className="analyst-list">
-              {analistasRank.map((analista) => (
-                <li key={analista.label}>
-                  <span>{analista.label}</span>
-                  <strong>{analista.qtd}</strong>
-                </li>
-              ))}
+            <ul className="analyst-legend">
+              {analystSlices.map((analista) => {
+                const isActive = selectedAnalyst === analista.label;
+                const isMuted = Boolean(selectedAnalyst && !isActive);
+                return (
+                  <li
+                    key={analista.label}
+                    className={`${isActive ? "active" : ""} ${isMuted ? "muted" : ""}`}
+                  >
+                    <button
+                      type="button"
+                      className="legend-item-btn"
+                      onClick={() => setSelectedAnalyst((prev) => (prev === analista.label ? null : analista.label))}
+                    >
+                      <span className="legend-dot" style={{ background: analista.color }} />
+                      <span className="legend-name" title={analista.label}>{analista.label}</span>
+                      <strong>{analista.qtd}</strong>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </article>
         </section>
 
         <article className="card bars-card">
           <h3>Chamados Concluidos x Chamados Totais</h3>
+          {selectedPeriod ? (
+            <button type="button" className="period-filter-pill" onClick={() => setSelectedPeriod(null)}>
+              Periodo: {selectedPeriod} (limpar)
+            </button>
+          ) : null}
           <div className="bars-grid">
-            {series.map((item) => (
-              <div key={item.mes} className="bar-column">
+            {series.map((item) => {
+              const isActive = selectedPeriod === item.key;
+              const isMuted = Boolean(selectedPeriod && !isActive);
+              return (
+              <button
+                type="button"
+                key={item.key}
+                className={`bar-column interactive ${isActive ? "active" : ""} ${isMuted ? "muted" : ""}`}
+                onClick={() => setSelectedPeriod((prev) => (prev === item.key ? null : item.key))}
+                aria-label={`Filtrar por periodo ${item.key}`}
+              >
                 <div className="bar-stack">
                   <div className="bar total" style={{ height: `${(item.total / maxSeries) * 180}px` }}>
                     <small>{item.total}</small>
@@ -193,9 +351,9 @@ export default function ChamadosPage() {
                     <small>{item.concluidos}</small>
                   </div>
                 </div>
-                <span>{item.mes}</span>
-              </div>
-            ))}
+                <span>{item.mes}/{item.yearValue.slice(2)}</span>
+              </button>
+            );})}
           </div>
         </article>
       </section>
@@ -230,13 +388,15 @@ function SelectField({ label, value, options, onChange, mapLabel }: SelectFieldP
 type KpiCardProps = {
   title: string;
   value: string;
+  subtitle?: string;
 };
 
-function KpiCard({ title, value }: KpiCardProps) {
+function KpiCard({ title, value, subtitle }: KpiCardProps) {
   return (
     <article className="card kpi-card">
       <h2>{title}</h2>
       <p>{value}</p>
+      {subtitle ? <small className="kpi-subtitle">{subtitle}</small> : null}
     </article>
   );
 }

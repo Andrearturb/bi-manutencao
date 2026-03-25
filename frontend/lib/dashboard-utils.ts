@@ -1,6 +1,10 @@
 import { DashboardItem, FilterState } from "@/lib/types";
 
-const STATUS_CONCLUIDO = ["concluido", "concluido", "solicitacao finalizada"];
+const STATUS_ENCERRADOS = [
+  "chamado concluido",
+  "concluido",
+  "solicitacao finalizada",
+];
 
 function normalize(value: string | null | undefined): string {
   return (value ?? "")
@@ -18,7 +22,7 @@ export function parseDate(value: string | null | undefined): Date | null {
 
 export function filterDados(dados: DashboardItem[], filter: FilterState): DashboardItem[] {
   return dados.filter((item) => {
-    const date = parseDate(item.dataRequisicao ?? item.dataConclusao);
+    const date = parseDate(item.dataRequisicao);
     const mes = date ? String(date.getMonth() + 1).padStart(2, "0") : "";
     const ano = date ? String(date.getFullYear()) : "";
 
@@ -58,26 +62,73 @@ export function countBy(dados: DashboardItem[], getter: (item: DashboardItem) =>
     .sort((a, b) => b.qtd - a.qtd);
 }
 
+export type SlaMetrics = {
+  percent: number;
+  noPrazo: number;
+  atrasado: number;
+  totalConsiderado: number;
+};
+
+function normalizeSlaStatus(value: string | null | undefined): string {
+  const normalized = normalize(value);
+  if (normalized === "noprazo" || normalized === "no prazo") return "NoPrazo";
+  if (normalized === "atrasado") return "Atrasado";
+  return "";
+}
+
+export function calcSlaMetrics(dados: DashboardItem[]): SlaMetrics {
+  let noPrazo = 0;
+  let atrasado = 0;
+
+  for (const item of dados) {
+    const status = normalizeSlaStatus(item.slaStatus);
+    if (status === "NoPrazo") noPrazo += 1;
+    if (status === "Atrasado") atrasado += 1;
+  }
+
+  const totalConsiderado = noPrazo + atrasado;
+  const percent = totalConsiderado === 0 ? 0 : Math.round((noPrazo / totalConsiderado) * 100);
+
+  return {
+    percent,
+    noPrazo,
+    atrasado,
+    totalConsiderado,
+  };
+}
+
 export function calcSlaPercent(dados: DashboardItem[]): number {
-  const considerados = dados.filter((item) => {
-    const status = item.slaStatus ?? "";
-    return status === "NoPrazo" || status === "Atrasado";
-  });
-
-  if (considerados.length === 0) return 0;
-
-  const noPrazo = considerados.filter((item) => item.slaStatus === "NoPrazo").length;
-  return Math.round((noPrazo / considerados.length) * 100);
+  return calcSlaMetrics(dados).percent;
 }
 
 export function calcCustoMedio(dados: DashboardItem[]): number {
-  const valores = dados
-    .map((item) => item.valorAprovado)
-    .filter((value): value is number => typeof value === "number");
+  const encerrados = dados.filter((item) => STATUS_ENCERRADOS.includes(normalize(item.status)));
+  if (encerrados.length === 0) return 0;
 
-  if (valores.length === 0) return 0;
-  const soma = valores.reduce((acc, cur) => acc + cur, 0);
-  return Math.round(soma / valores.length);
+  const soma = encerrados.reduce((acc, item) => {
+    const value = item.valorAprovado;
+
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? acc + value : acc;
+    }
+
+    if (typeof value === "string") {
+      const cleaned = value.trim();
+      if (!cleaned) return acc;
+
+      const normalized = cleaned.includes(",")
+        ? cleaned.replace(/\./g, "").replace(",", ".")
+        : cleaned;
+
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? acc + parsed : acc;
+    }
+
+    // Chamado encerrado sem custo deve entrar no denominador como zero.
+    return acc;
+  }, 0);
+
+  return Math.round(soma / encerrados.length);
 }
 
 export function countStatus(dados: DashboardItem[], statusLabel: string): number {
@@ -86,21 +137,30 @@ export function countStatus(dados: DashboardItem[], statusLabel: string): number
 }
 
 export function countConcluidos(dados: DashboardItem[]): number {
-  return dados.filter((item) => STATUS_CONCLUIDO.includes(normalize(item.status))).length;
+  return dados.filter((item) => STATUS_ENCERRADOS.includes(normalize(item.status))).length;
 }
 
-export function monthlySeries(dados: DashboardItem[]): Array<{ mes: string; total: number; concluidos: number }> {
+export type MonthlyPoint = {
+  key: string;
+  mes: string;
+  monthValue: string;
+  yearValue: string;
+  total: number;
+  concluidos: number;
+};
+
+export function monthlySeries(dados: DashboardItem[]): MonthlyPoint[] {
   const byMonth = new Map<string, { total: number; concluidos: number; monthOrder: number }>();
 
   for (const item of dados) {
-    const date = parseDate(item.dataRequisicao ?? item.dataConclusao);
+    const date = parseDate(item.dataRequisicao);
     if (!date) continue;
 
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const monthOrder = date.getFullYear() * 100 + (date.getMonth() + 1);
     const current = byMonth.get(key) ?? { total: 0, concluidos: 0, monthOrder };
     current.total += 1;
-    if (STATUS_CONCLUIDO.includes(normalize(item.status))) current.concluidos += 1;
+    if (STATUS_ENCERRADOS.includes(normalize(item.status))) current.concluidos += 1;
     byMonth.set(key, current);
   }
 
@@ -111,7 +171,10 @@ export function monthlySeries(dados: DashboardItem[]): Array<{ mes: string; tota
       const ref = new Date(Number(year), Number(month) - 1, 1);
       const mes = ref.toLocaleString("pt-BR", { month: "short" }).toUpperCase();
       return {
+        key,
         mes,
+        monthValue: month,
+        yearValue: year,
         total: values.total,
         concluidos: values.concluidos,
       };

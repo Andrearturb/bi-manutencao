@@ -191,6 +191,13 @@ h4 {
   font-weight: 700;
 }
 
+.kpi-subtitle {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 .status-kpis {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
@@ -265,6 +272,19 @@ h4 {
   color: #153f59;
 }
 
+.analyst-filter-pill {
+  display: block;
+  margin: 0.45rem auto 0;
+  border: 1px solid #9ec2dd;
+  background: #edf5fb;
+  color: #0f3a56;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .donut-wrap {
   display: grid;
   place-content: center;
@@ -291,26 +311,107 @@ h4 {
   border: 1px solid #d8e1ee;
 }
 
+.donut.multi {
+  background: #d7e0ea;
+  cursor: pointer;
+}
+
+.donut.multi::before {
+  content: none;
+}
+
+.donut-center {
+  position: absolute;
+  width: 65%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #d8e1ee;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.slice-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  line-height: 1;
+  font-weight: 700;
+  color: #ffffff;
+  border: 0;
+  border-radius: 0.32rem;
+  padding: 0.2rem 0.34rem;
+  background: rgba(41, 62, 88, 0.55);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.slice-label.muted {
+  opacity: 0.42;
+}
+
 .donut span {
   position: absolute;
   font-size: 2rem;
   font-weight: 700;
 }
 
-.analyst-list {
+.analyst-legend {
   list-style: none;
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.4rem;
+  padding: 0.2rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
+  justify-content: center;
 }
 
-.analyst-list li {
+.analyst-legend li {
   display: flex;
-  justify-content: space-between;
-  border-bottom: 1px dashed #d5deea;
-  padding-bottom: 0.3rem;
+  align-items: center;
+  gap: 0.25rem;
   color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.analyst-legend li.muted {
+  opacity: 0.45;
+}
+
+.analyst-legend li.active {
+  opacity: 1;
+}
+
+.analyst-legend li.active .legend-item-btn {
+  background: rgba(44, 117, 197, 0.12);
+  border-radius: 0.45rem;
+  padding: 0.12rem 0.28rem;
+}
+
+.legend-item-btn {
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.legend-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.legend-name {
+  max-width: 95px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bars-card {
@@ -321,6 +422,19 @@ h4 {
   text-align: center;
   margin-bottom: 0.5rem;
   color: #184862;
+}
+
+.period-filter-pill {
+  display: block;
+  margin: 0 auto 0.4rem;
+  border: 1px solid #a4bad9;
+  background: #edf3fb;
+  color: #143a63;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .bars-grid {
@@ -335,6 +449,23 @@ h4 {
   display: grid;
   justify-items: center;
   gap: 0.45rem;
+}
+
+.bar-column.interactive {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+  padding: 0.25rem 0.15rem;
+  border-radius: 0.65rem;
+}
+
+.bar-column.interactive.active {
+  background: rgba(43, 95, 162, 0.1);
+}
+
+.bar-column.interactive.muted {
+  opacity: 0.45;
 }
 
 .bar-stack {

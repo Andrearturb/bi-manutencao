@@ -15,7 +15,7 @@ export type DashboardItem = {
   solucao?: string | null;
   dataRequisicao?: string | null;
   dataConclusao?: string | null;
-  valorAprovado?: number | null;
+  valorAprovado?: number | string | null;
 };
 
 export type DashboardPayload = {
