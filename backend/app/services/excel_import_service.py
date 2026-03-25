@@ -24,6 +24,7 @@ class ExcelImportService:
         "AC": "fornecedor",
         "AR": "valor_aprovado",
         "AU": "solucao",
+        "BS": "os_raw",
         "BG": "data_conclusao",
         "BY": "data_requisicao",
     }

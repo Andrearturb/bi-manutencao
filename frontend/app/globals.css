@@ -180,6 +180,21 @@ h4 {
   text-align: center;
 }
 
+.kpi-card.clickable {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.kpi-card.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(11, 37, 61, 0.12);
+}
+
+.kpi-card.clickable:focus-visible {
+  outline: 2px solid #2b8be8;
+  outline-offset: 2px;
+}
+
 .kpi-card h2 {
   font-size: 1.05rem;
   color: var(--accent);
@@ -216,6 +231,16 @@ h4 {
   margin: 0.35rem 0 0;
   font-size: 2rem;
   font-weight: 700;
+}
+
+.mini-kpi.clickable {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.mini-kpi.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(11, 37, 61, 0.12);
 }
 
 .mini-kpi.emphasis {
@@ -261,6 +286,200 @@ h4 {
 .rank-table td:nth-child(2),
 .rank-table td:nth-child(3) {
   text-align: right;
+}
+
+.category-table .category-row td {
+  background: #f8fbff;
+}
+
+.category-toggle {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.category-row.expanded td {
+  background: #eef5fc;
+}
+
+.chevron {
+  width: 0.8rem;
+  display: inline-block;
+  color: #1f4f76;
+}
+
+.subcategory-row td {
+  background: #ffffff;
+  color: #486074;
+  font-size: 0.88rem;
+}
+
+.subcategory-row td:first-child {
+  padding-left: 2rem;
+}
+
+.subcategory-link {
+  border: 0;
+  background: transparent;
+  color: #1c527a;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.loja-link {
+  border: 0;
+  background: transparent;
+  color: #1c527a;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.loja-row td {
+  background: #f9fcff;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 20, 33, 0.48);
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: min(1200px, 96vw);
+  max-height: 88vh;
+  background: #ffffff;
+  border-radius: 0.9rem;
+  border: 1px solid #cfdbe8;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #d9e3ee;
+  background: #f3f8fd;
+}
+
+.modal-header.tone-default {
+  background: #f3f8fd;
+  border-bottom-color: #d9e3ee;
+}
+
+.modal-header.tone-aberto {
+  background: #eef3f8;
+  border-bottom-color: #c8d3df;
+}
+
+.modal-header.tone-atendimento {
+  background: #fff6d9;
+  border-bottom-color: #e9d89d;
+}
+
+.modal-header.tone-nao-aprovado {
+  background: #fde9eb;
+  border-bottom-color: #e8bfc4;
+}
+
+.modal-header.tone-finalizada {
+  background: #f3ebff;
+  border-bottom-color: #d9c5f0;
+}
+
+.modal-header.tone-concluido {
+  background: #e8f8ee;
+  border-bottom-color: #c3e1cd;
+}
+
+.modal-header h3 {
+  color: #0d3f65;
+}
+
+.modal-header.tone-aberto h3 {
+  color: #344455;
+}
+
+.modal-header.tone-atendimento h3 {
+  color: #7d6112;
+}
+
+.modal-header.tone-nao-aprovado h3 {
+  color: #8f3038;
+}
+
+.modal-header.tone-finalizada h3 {
+  color: #5f3a87;
+}
+
+.modal-header.tone-concluido h3 {
+  color: #1f6140;
+}
+
+.modal-header p {
+  margin: 0.2rem 0 0;
+  color: #4a5f73;
+  font-size: 0.9rem;
+}
+
+.modal-close {
+  border: 1px solid #9bb7d3;
+  background: #ffffff;
+  color: #174567;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.modal-table-wrap {
+  overflow: auto;
+}
+
+.modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.modal-table th,
+.modal-table td {
+  border-bottom: 1px solid #e1e9f2;
+  text-align: left;
+  vertical-align: top;
+  padding: 0.45rem 0.55rem;
+  min-width: 95px;
+}
+
+.modal-table th {
+  position: sticky;
+  top: 0;
+  background: #f6f9fd;
+  color: #1e4a6f;
+  z-index: 1;
+}
+
+.os-link {
+  color: #1b5b8a;
+  font-weight: 700;
 }
 
 .donut-card {

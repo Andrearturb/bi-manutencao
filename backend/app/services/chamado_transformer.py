@@ -1,5 +1,7 @@
 import math
 import re
+import json
+import ast
 import unicodedata
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -122,6 +124,58 @@ class ChamadoTransformer:
         except Exception:
             return None
 
+    def parse_os_info(self, valor: Any) -> tuple[str | None, str | None]:
+        if valor is None:
+            return (None, None)
+
+        payload: dict[str, Any] | None = None
+
+        if isinstance(valor, dict):
+            payload = valor
+        elif isinstance(valor, list) and valor and isinstance(valor[0], dict):
+            payload = valor[0]
+        else:
+            texto = self.normalizar_texto(valor)
+            if not texto:
+                return (None, None)
+
+            # Tenta JSON primeiro, depois literal Python comum em alguns exports.
+            try:
+                possivel = json.loads(texto)
+                if isinstance(possivel, dict):
+                    payload = possivel
+                elif isinstance(possivel, list) and possivel and isinstance(possivel[0], dict):
+                    payload = possivel[0]
+            except json.JSONDecodeError:
+                try:
+                    possivel = ast.literal_eval(texto)
+                    if isinstance(possivel, dict):
+                        payload = possivel
+                    elif isinstance(possivel, list) and possivel and isinstance(possivel[0], dict):
+                        payload = possivel[0]
+                except (ValueError, SyntaxError):
+                    return (None, None)
+
+        if payload is None:
+            return (None, None)
+
+        status_raw = payload.get("status")
+        status = self.normalizar_texto(status_raw)
+        status_normalizado = self.normalizar_comparacao(status)
+
+        if "complet" in status_normalizado or "conclu" in status_normalizado:
+            status = "concluido"
+        elif "pendent" in status_normalizado:
+            status = "pendente"
+        else:
+            status = status.lower() if status else None
+
+        url = self.normalizar_texto(payload.get("url")) or self.normalizar_texto(payload.get("url_pdf_assinado"))
+        if status != "concluido":
+            url = None
+
+        return (status, url)
+
     def status_entra_no_sla(self, status: Any) -> bool:
         status_normalizado = self.normalizar_comparacao(status)
         return status_normalizado in self.STATUS_QUE_ENTRAM_NO_SLA
@@ -140,6 +194,7 @@ class ChamadoTransformer:
     def transformar_registro(self, row: dict[str, Any]) -> dict[str, Any]:
         coluna_d_raw = row.get("coluna_d_raw")
         status = row.get("status")
+        os_status, os_url = self.parse_os_info(row.get("os_raw"))
 
         return {
             "ticket": self.normalizar_texto(row.get("ticket")),
@@ -160,6 +215,8 @@ class ChamadoTransformer:
             "fornecedor": self.limpar_fornecedor(row.get("fornecedor")),
             "descricao_servico": self.normalizar_texto(row.get("descricao_servico")),
             "solucao": self.normalizar_texto(row.get("solucao")),
+            "os_status": os_status,
+            "os_url": os_url,
             "data_requisicao": self.parse_data(row.get("data_requisicao")),
             "data_conclusao": self.parse_data(row.get("data_conclusao")),
             "valor_aprovado": self.parse_decimal(row.get("valor_aprovado")),

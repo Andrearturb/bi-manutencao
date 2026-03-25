@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { fetchDashboardCorretivas } from "@/lib/api";
 import {
@@ -15,7 +15,7 @@ import {
   parseDate,
   uniqueOptions,
 } from "@/lib/dashboard-utils";
-import { DashboardPayload, FilterState } from "@/lib/types";
+import { DashboardItem, DashboardPayload, FilterState } from "@/lib/types";
 
 const DEFAULT_FILTERS: FilterState = {
   status: "todos",
@@ -29,8 +29,17 @@ const DEFAULT_FILTERS: FilterState = {
 export default function ChamadosPage() {
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [totalModalOpen, setTotalModalOpen] = useState(false);
+  const [totalOsModalOpen, setTotalOsModalOpen] = useState(false);
   const [selectedAnalyst, setSelectedAnalyst] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [lojaModal, setLojaModal] = useState<string | null>(null);
+  const [subcategoryModal, setSubcategoryModal] = useState<{ categoria: string; subcategoria: string } | null>(null);
+  const [statusModal, setStatusModal] = useState<{
+    key: "em-aberto" | "em-atendimento" | "nao-aprovado" | "solicitacao-finalizada" | "concluidos";
+    titulo: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,6 +122,11 @@ export default function ChamadosPage() {
     });
   }, [analystFiltered, selectedPeriod]);
 
+  const totalOsModalItems = useMemo(
+    () => filtered.filter((item) => item.os?.status === "pendente" || item.os?.status === "concluido"),
+    [filtered],
+  );
+
   const totalChamados = filtered.length;
   const totalOS = countTotalOs(filtered);
   const custoMedio = calcCustoMedio(filtered);
@@ -126,6 +140,31 @@ export default function ChamadosPage() {
 
   const lojasRank = countBy(filtered, (item) => item.loja ?? "Sem loja").slice(0, 8);
   const categoriasRank = countBy(filtered, (item) => item.categoria ?? "Sem categoria").slice(0, 8);
+  const subcategoriasByCategoria = useMemo(() => {
+    const categories = new Map<string, Map<string, number>>();
+
+    for (const item of filtered) {
+      const categoria = (item.categoria ?? "Sem categoria").trim() || "Sem categoria";
+      const subcategoria = (item.subcategoria ?? "Sem subcategoria").trim() || "Sem subcategoria";
+
+      if (!categories.has(categoria)) {
+        categories.set(categoria, new Map<string, number>());
+      }
+
+      const subMap = categories.get(categoria)!;
+      subMap.set(subcategoria, (subMap.get(subcategoria) ?? 0) + 1);
+    }
+
+    const result = new Map<string, Array<{ label: string; qtd: number }>>();
+    for (const [categoria, subMap] of categories.entries()) {
+      const list = [...subMap.entries()]
+        .map(([label, qtd]) => ({ label, qtd }))
+        .sort((a, b) => b.qtd - a.qtd);
+      result.set(categoria, list);
+    }
+
+    return result;
+  }, [filtered]);
 
   const analystPalette = ["#2b8be8", "#2034a8", "#6a1f8f", "#d86a31", "#0f766e"];
   const analystSlices = useMemo(() => {
@@ -190,6 +229,51 @@ export default function ChamadosPage() {
 
   const maxSeries = Math.max(1, ...series.map((item) => item.total));
 
+  const modalItems = useMemo(() => {
+    if (!subcategoryModal) return [];
+
+    const categoriaTarget = subcategoryModal.categoria.trim().toLowerCase();
+    const subTarget = subcategoryModal.subcategoria.trim().toLowerCase();
+
+    return filtered.filter((item) => {
+      const categoria = (item.categoria ?? "Sem categoria").trim().toLowerCase();
+      const subcategoria = (item.subcategoria ?? "Sem subcategoria").trim().toLowerCase();
+      return categoria === categoriaTarget && subcategoria === subTarget;
+    });
+  }, [filtered, subcategoryModal]);
+
+  const lojaModalItems = useMemo(() => {
+    if (!lojaModal) return [];
+    const lojaTarget = lojaModal.trim().toLowerCase();
+    return filtered.filter((item) => (item.loja ?? "Sem loja").trim().toLowerCase() === lojaTarget);
+  }, [filtered, lojaModal]);
+
+  const statusModalItems = useMemo(() => {
+    if (!statusModal) return [];
+
+    const normalize = (value: string | null | undefined) =>
+      (value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+    const isConcluido = (value: string | null | undefined) => {
+      const status = normalize(value);
+      return status === "chamado concluido" || status === "concluido" || status === "solicitacao finalizada";
+    };
+
+    return filtered.filter((item) => {
+      const status = normalize(item.status);
+
+      if (statusModal.key === "em-aberto") return status === "em aberto";
+      if (statusModal.key === "em-atendimento") return status === "em atendimento";
+      if (statusModal.key === "nao-aprovado") return status === "nao aprovado";
+      if (statusModal.key === "solicitacao-finalizada") return status === "solicitacao finalizada";
+      return isConcluido(item.status);
+    });
+  }, [filtered, statusModal]);
+
   useEffect(() => {
     if (!selectedPeriod) return;
     const exists = series.some((item) => item.key === selectedPeriod);
@@ -242,8 +326,8 @@ export default function ChamadosPage() {
         </header>
 
         <section className="kpi-grid top-kpis">
-          <KpiCard title="Total de Chamados" value={String(totalChamados)} />
-          <KpiCard title="Total de O.S" value={String(totalOS)} />
+          <KpiCard title="Total de Chamados" value={String(totalChamados)} onClick={() => setTotalModalOpen(true)} />
+          <KpiCard title="Total de O.S" value={String(totalOS)} onClick={() => setTotalOsModalOpen(true)} />
           <KpiCard title="Custo Medio Servico" value={`R$ ${custoMedio.toLocaleString("pt-BR")}`} />
           <KpiCard
             title="SLA %"
@@ -253,16 +337,22 @@ export default function ChamadosPage() {
         </section>
 
         <section className="kpi-grid status-kpis">
-          <MiniKpi title="Em aberto" value={statusEmAberto} />
-          <MiniKpi title="Em atendimento" value={statusEmAtendimento} />
-          <MiniKpi title="Nao Aprovado" value={statusNaoAprovado} />
-          <MiniKpi title="Solicitacao Finalizada" value={statusSolicitacaoFinalizada} />
-          <MiniKpi title="Concluidos" value={statusConcluidos} emphasis />
+          <MiniKpi title="Em aberto" value={statusEmAberto} onClick={() => setStatusModal({ key: "em-aberto", titulo: "Em aberto" })} />
+          <MiniKpi title="Em atendimento" value={statusEmAtendimento} onClick={() => setStatusModal({ key: "em-atendimento", titulo: "Em atendimento" })} />
+          <MiniKpi title="Nao Aprovado" value={statusNaoAprovado} onClick={() => setStatusModal({ key: "nao-aprovado", titulo: "Nao Aprovado" })} />
+          <MiniKpi title="Solicitacao Finalizada" value={statusSolicitacaoFinalizada} onClick={() => setStatusModal({ key: "solicitacao-finalizada", titulo: "Solicitacao Finalizada" })} />
+          <MiniKpi title="Concluidos" value={statusConcluidos} emphasis onClick={() => setStatusModal({ key: "concluidos", titulo: "Concluidos" })} />
         </section>
 
         <section className="data-grid">
-          <RankTable title="Loja" rows={lojasRank} />
-          <RankTable title="Categoria" rows={categoriasRank} />
+          <LojaTable rows={lojasRank} onOpenLoja={(loja) => setLojaModal(loja)} />
+          <CategoryTable
+            rows={categoriasRank}
+            subRowsByCategory={subcategoriasByCategoria}
+            expandedCategory={expandedCategory}
+            onToggleCategory={(category) => setExpandedCategory((prev) => (prev === category ? null : category))}
+            onOpenSubcategory={(categoria, subcategoria) => setSubcategoryModal({ categoria, subcategoria })}
+          />
 
           <article className="card donut-card">
             <h3>Chamados por Analistas</h3>
@@ -357,6 +447,53 @@ export default function ChamadosPage() {
             );})}
           </div>
         </article>
+
+        {subcategoryModal ? (
+          <ChamadosDetalhesModal
+            titulo={`Categoria: ${subcategoryModal.categoria}`}
+            subtitulo={`${subcategoryModal.subcategoria} • ${modalItems.length} chamados`}
+            items={modalItems}
+            onClose={() => setSubcategoryModal(null)}
+          />
+        ) : null}
+
+        {lojaModal ? (
+          <ChamadosDetalhesModal
+            titulo={`Loja: ${lojaModal}`}
+            subtitulo={`${lojaModalItems.length} chamados`}
+            items={lojaModalItems}
+            onClose={() => setLojaModal(null)}
+          />
+        ) : null}
+
+        {statusModal ? (
+          <ChamadosDetalhesModal
+            titulo={`Status: ${statusModal.titulo}`}
+            subtitulo={`${statusModalItems.length} chamados`}
+            items={statusModalItems}
+            tone={statusToneFromKey(statusModal.key)}
+            showMotivoNaoAprovacao={statusModal.key === "nao-aprovado"}
+            onClose={() => setStatusModal(null)}
+          />
+        ) : null}
+
+        {totalModalOpen ? (
+          <ChamadosDetalhesModal
+            titulo="Total de Chamados"
+            subtitulo={`${filtered.length} chamados`}
+            items={filtered}
+            onClose={() => setTotalModalOpen(false)}
+          />
+        ) : null}
+
+        {totalOsModalOpen ? (
+          <ChamadosDetalhesModal
+            titulo="Total de O.S"
+            subtitulo={`${totalOsModalItems.length} O.S`}
+            items={totalOsModalItems}
+            onClose={() => setTotalOsModalOpen(false)}
+          />
+        ) : null}
       </section>
     </main>
   );
@@ -390,11 +527,27 @@ type KpiCardProps = {
   title: string;
   value: string;
   subtitle?: string;
+  onClick?: () => void;
 };
 
-function KpiCard({ title, value, subtitle }: KpiCardProps) {
+function KpiCard({ title, value, subtitle, onClick }: KpiCardProps) {
   return (
-    <article className="card kpi-card">
+    <article
+      className={`card kpi-card ${onClick ? "clickable" : ""}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+    >
       <h2>{title}</h2>
       <p>{value}</p>
       {subtitle ? <small className="kpi-subtitle">{subtitle}</small> : null}
@@ -406,11 +559,27 @@ type MiniKpiProps = {
   title: string;
   value: number;
   emphasis?: boolean;
+  onClick?: () => void;
 };
 
-function MiniKpi({ title, value, emphasis }: MiniKpiProps) {
+function MiniKpi({ title, value, emphasis, onClick }: MiniKpiProps) {
   return (
-    <article className={`card mini-kpi ${emphasis ? "emphasis" : ""}`}>
+    <article
+      className={`card mini-kpi ${emphasis ? "emphasis" : ""} ${onClick ? "clickable" : ""}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+    >
       <h4>{title}</h4>
       <p>{value}</p>
     </article>
@@ -422,6 +591,8 @@ type RankRow = {
   qtd: number;
   pct: number;
 };
+
+type ModalTone = "default" | "aberto" | "atendimento" | "nao-aprovado" | "finalizada" | "concluido";
 
 function RankTable({ title, rows }: { title: string; rows: RankRow[] }) {
   return (
@@ -447,6 +618,204 @@ function RankTable({ title, rows }: { title: string; rows: RankRow[] }) {
       </table>
     </article>
   );
+}
+
+function LojaTable({ rows, onOpenLoja }: { rows: RankRow[]; onOpenLoja: (loja: string) => void }) {
+  return (
+    <article className="card rank-table loja-table">
+      <h3>Loja</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Loja</th>
+            <th>QTD</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.label} className="loja-row">
+              <td>
+                <button type="button" className="loja-link" onClick={() => onOpenLoja(row.label)}>
+                  {row.label}
+                </button>
+              </td>
+              <td>{row.qtd}</td>
+              <td>{row.pct.toFixed(2)}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </article>
+  );
+}
+
+type CategoryTableProps = {
+  rows: RankRow[];
+  subRowsByCategory: Map<string, Array<{ label: string; qtd: number }>>;
+  expandedCategory: string | null;
+  onToggleCategory: (category: string) => void;
+  onOpenSubcategory: (categoria: string, subcategoria: string) => void;
+};
+
+function CategoryTable({ rows, subRowsByCategory, expandedCategory, onToggleCategory, onOpenSubcategory }: CategoryTableProps) {
+  return (
+    <article className="card rank-table category-table">
+      <h3>Categoria</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Categoria</th>
+            <th>QTD</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const isExpanded = expandedCategory === row.label;
+            const subRows = subRowsByCategory.get(row.label) ?? [];
+
+            return (
+              <Fragment key={row.label}>
+                <tr className={`category-row ${isExpanded ? "expanded" : ""}`}>
+                  <td>
+                    <button type="button" className="category-toggle" onClick={() => onToggleCategory(row.label)}>
+                      <span className="chevron">{isExpanded ? "▾" : "▸"}</span>
+                      <span>{row.label}</span>
+                    </button>
+                  </td>
+                  <td>{row.qtd}</td>
+                  <td>{row.pct.toFixed(2)}%</td>
+                </tr>
+
+                {isExpanded
+                  ? subRows.map((sub) => (
+                      <tr key={`${row.label}-${sub.label}`} className="subcategory-row">
+                        <td>
+                          <button
+                            type="button"
+                            className="subcategory-link"
+                            onClick={() => onOpenSubcategory(row.label, sub.label)}
+                          >
+                            {sub.label}
+                          </button>
+                        </td>
+                        <td>{sub.qtd}</td>
+                        <td />
+                      </tr>
+                    ))
+                  : null}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+    </article>
+  );
+}
+
+function formatValorAprovado(value: DashboardItem["valorAprovado"]): string {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? `R$ ${value.toLocaleString("pt-BR")}` : "-";
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(parsed) ? `R$ ${parsed.toLocaleString("pt-BR")}` : "-";
+  }
+  return "-";
+}
+
+function ChamadosDetalhesModal({
+  titulo,
+  subtitulo,
+  items,
+  onClose,
+  tone = "default",
+  showMotivoNaoAprovacao = false,
+}: {
+  titulo: string;
+  subtitulo: string;
+  items: DashboardItem[];
+  onClose: () => void;
+  tone?: ModalTone;
+  showMotivoNaoAprovacao?: boolean;
+}) {
+  return (
+    <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
+      <article className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <header className={`modal-header tone-${tone}`}>
+          <div>
+            <h3>{titulo}</h3>
+            <p>{subtitulo}</p>
+          </div>
+          <button type="button" className="modal-close" onClick={onClose}>Fechar</button>
+        </header>
+
+        <div className="modal-table-wrap">
+          <table className="modal-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Status</th>
+                {showMotivoNaoAprovacao ? <th>Motivo Nao Aprovacao</th> : null}
+                <th>SLA</th>
+                <th>Loja</th>
+                <th>Praca</th>
+                <th>Categoria</th>
+                <th>Subcategoria</th>
+                <th>Analista</th>
+                <th>Requisitante</th>
+                <th>Fornecedor</th>
+                <th>Descricao</th>
+                <th>Solucao</th>
+                <th>Data Req.</th>
+                <th>Data Concl.</th>
+                <th>Valor</th>
+                <th>OS Status</th>
+                <th>OS URL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={`${item.ticket ?? "sem-ticket"}-${index}`}>
+                  <td>{item.ticket ?? "-"}</td>
+                  <td>{item.status ?? "-"}</td>
+                  {showMotivoNaoAprovacao ? <td>{item.motivoNaoAprovacao ?? "-"}</td> : null}
+                  <td>{item.slaStatus ?? "-"}</td>
+                  <td>{item.loja ?? "-"}</td>
+                  <td>{item.praca ?? "-"}</td>
+                  <td>{item.categoria ?? "-"}</td>
+                  <td>{item.subcategoria ?? "-"}</td>
+                  <td>{item.analistaResponsavel ?? "-"}</td>
+                  <td>{item.requisitante ?? "-"}</td>
+                  <td>{item.fornecedor ?? "-"}</td>
+                  <td>{item.descricaoServico ?? "-"}</td>
+                  <td>{item.solucao ?? "-"}</td>
+                  <td>{item.dataRequisicao ? new Date(item.dataRequisicao).toLocaleDateString("pt-BR") : "-"}</td>
+                  <td>{item.dataConclusao ? new Date(item.dataConclusao).toLocaleDateString("pt-BR") : "-"}</td>
+                  <td>{formatValorAprovado(item.valorAprovado)}</td>
+                  <td>{item.os?.status ?? "-"}</td>
+                  <td>
+                    {item.os?.url ? (
+                      <a href={item.os.url} target="_blank" rel="noreferrer" className="os-link">PDF</a>
+                    ) : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function statusToneFromKey(key: "em-aberto" | "em-atendimento" | "nao-aprovado" | "solicitacao-finalizada" | "concluidos"): ModalTone {
+  if (key === "em-aberto") return "aberto";
+  if (key === "em-atendimento") return "atendimento";
+  if (key === "nao-aprovado") return "nao-aprovado";
+  if (key === "solicitacao-finalizada") return "finalizada";
+  return "concluido";
 }
 
 function monthLabel(value: string): string {

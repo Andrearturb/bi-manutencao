@@ -51,6 +51,14 @@ class DashboardService:
             "fornecedor": registro.get("fornecedor"),
             "descricaoServico": registro.get("descricao_servico"),
             "solucao": registro.get("solucao"),
+            "os": (
+                {
+                    "status": registro.get("os_status"),
+                    "url": registro.get("os_url"),
+                }
+                if registro.get("os_status")
+                else None
+            ),
             "dataRequisicao": (
                 registro["data_requisicao"].isoformat()
                 if registro.get("data_requisicao")

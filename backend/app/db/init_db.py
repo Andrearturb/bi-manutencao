@@ -9,5 +9,11 @@ def init_db() -> None:
         connection.exec_driver_sql(
             "ALTER TABLE IF EXISTS chamados_importados RENAME TO chamados_tratados"
         )
+        connection.exec_driver_sql(
+            "ALTER TABLE IF EXISTS chamados_tratados ADD COLUMN IF NOT EXISTS os_status TEXT"
+        )
+        connection.exec_driver_sql(
+            "ALTER TABLE IF EXISTS chamados_tratados ADD COLUMN IF NOT EXISTS os_url TEXT"
+        )
 
     Base.metadata.create_all(bind=engine)

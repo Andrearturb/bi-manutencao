@@ -33,6 +33,8 @@ class ChamadoTratado(Base):
 
     descricao_servico: Mapped[str | None] = mapped_column(Text, nullable=True)
     solucao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    os_status: Mapped[str | None] = mapped_column(Text, nullable=True)
+    os_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     data_requisicao: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     data_conclusao: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)

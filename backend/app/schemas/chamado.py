@@ -27,6 +27,8 @@ class ChamadoBase(BaseModel):
     descricaoServico: Optional[str] = None
     solucao: Optional[str] = None
 
+    os: Optional[dict[str, Optional[str]]] = None
+
     dataRequisicao: Optional[datetime] = None
     dataConclusao: Optional[datetime] = None
 
