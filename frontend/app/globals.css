@@ -1,4 +1,6 @@
 :root {
+  --font-title: "Segoe UI", "Trebuchet MS", "Arial Narrow", Arial, sans-serif;
+  --font-body: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   --bg: #dfe6eb;
   --panel: #f4f7fa;
   --card: #f7fafc;
@@ -41,6 +43,47 @@ h4 {
   place-content: center;
   gap: 0.75rem;
   text-align: center;
+}
+
+.auth-entry {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  width: min(560px, 92vw);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: 0 10px 35px rgba(10, 32, 55, 0.12);
+  padding: 1.4rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.auth-error {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.auth-success {
+  margin: 0;
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.local-auth-form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.local-auth-form input {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
 }
 
 .home-entry-link {
@@ -123,6 +166,147 @@ h4 {
 .update-label {
   color: #b7d1e7;
   font-size: 0.82rem;
+}
+
+.auth-user-box {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.auth-user-box small {
+  color: #c7e1f7;
+  word-break: break-all;
+}
+
+.auth-logout-btn {
+  border: 0;
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.4rem 0.55rem;
+  cursor: pointer;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+  padding: 1rem;
+}
+
+.admin-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.admin-header p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+}
+
+.admin-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-link-btn {
+  text-decoration: none;
+  border-radius: 0.55rem;
+  border: 1px solid #95abc1;
+  color: #1c4563;
+  padding: 0.45rem 0.7rem;
+  font-weight: 700;
+}
+
+.admin-inline-link {
+  color: #1d4f72;
+  font-weight: 700;
+}
+
+.admin-section {
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.permission-form {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.permission-form input {
+  width: min(420px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.6rem;
+}
+
+.permission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.permission-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #dbe4ee;
+  border-radius: 0.55rem;
+  background: #f9fcff;
+}
+
+.permission-revoke-btn {
+  border: 1px solid #e7b8c0;
+  border-radius: 0.45rem;
+  background: #fff2f4;
+  color: #8f2438;
+  padding: 0.3rem 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.users-table-wrap {
+  overflow: auto;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+
+.users-table th,
+.users-table td {
+  border-bottom: 1px solid #e4ebf3;
+  padding: 0.5rem 0.55rem;
+  text-align: left;
+}
+
+.users-table th {
+  color: #1b4968;
+  background: #f4f8fc;
+}
+
+.users-action-muted {
+  color: #5c6f81;
+  font-weight: 700;
+}
+
+.users-grant-btn {
+  padding: 0.3rem 0.6rem;
 }
 
 .content {
@@ -753,5 +937,20 @@ h4 {
 
   .filters-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .permission-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .permission-list li {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

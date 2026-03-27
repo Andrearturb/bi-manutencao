@@ -4,6 +4,14 @@ Projeto em duas frentes:
 - Backend FastAPI para importacao e exposicao do dashboard de chamados corretivos.
 - Frontend Next.js para visualizacao do JSON tratado persistido no banco.
 
+## Autenticacao e permissoes
+
+- O projeto suporta dois modos: `local` (desenvolvimento) e `microsoft`.
+- No modo `local`, o login usa e-mail/senha definidos em `LOCAL_USERS`.
+- No modo `microsoft`, o backend valida o token JWT emitido pelo Microsoft Entra ID (Azure AD).
+- Para importar planilhas, o usuario precisa de permissao especial.
+- O `ADMIN_PRINCIPAL_EMAIL` pode conceder e revogar liberacoes em `/admin/importacao`.
+
 ## Configuracao rapida de ambiente
 
 1. Backend:
@@ -11,6 +19,17 @@ Projeto em duas frentes:
 
 2. Frontend:
 - Copie `frontend/.env.example` para `frontend/.env.local`.
+
+3. Configure autenticacao local para desenvolvimento:
+- `AUTH_MODE=local`
+- `ADMIN_PRINCIPAL_EMAIL`
+- `LOCAL_USERS` (exemplo: `admin@local.test:admin123;analista@local.test:analista123`)
+
+4. Para usar Microsoft depois, troque para `AUTH_MODE=microsoft` e preencha:
+- `AZURE_TENANT_ID`
+- `AZURE_CLIENT_ID`
+- `NEXT_PUBLIC_AZURE_TENANT_ID`
+- `NEXT_PUBLIC_AZURE_CLIENT_ID`
 
 ## Rodar com Docker (Recomendado)
 

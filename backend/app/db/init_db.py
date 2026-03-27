@@ -2,6 +2,7 @@ from app.db.base import Base
 from app.db.session import engine
 from app.models.chamado_tratado import ChamadoTratado
 from app.models.dashboard_cache import DashboardCache
+from app.models.import_permission import ImportPermission
 
 
 def init_db() -> None:

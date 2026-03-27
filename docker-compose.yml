@@ -25,6 +25,12 @@ services:
       APP_NAME: BI Manutenção API
       APP_VERSION: 0.1.0
       CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      AUTH_MODE: ${AUTH_MODE:-local}
+      ADMIN_PRINCIPAL_EMAIL: ${ADMIN_PRINCIPAL_EMAIL:-admin@empresa.com}
+      LOCAL_AUTH_SECRET_KEY: ${LOCAL_AUTH_SECRET_KEY:-dev-local-secret-change-me}
+      LOCAL_USERS: ${LOCAL_USERS:-admin@local.test:admin123;analista@local.test:analista123}
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID:-}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
     ports:
       - "8000:8000"
     depends_on:
@@ -39,6 +45,8 @@ services:
       context: ./frontend
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://backend:8000
+      NEXT_PUBLIC_AZURE_TENANT_ID: ${AZURE_TENANT_ID:-}
+      NEXT_PUBLIC_AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-}
     ports:
       - "3000:3000"
     depends_on:

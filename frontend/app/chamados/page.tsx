@@ -1,16 +1,21 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   KpiCard,
   MiniKpi,
   SelectField,
 } from "@/components/chamados/chamados-cards";
+import { useAuth } from "@/components/auth/auth-provider";
 import { AnalystDonutCard, MonthlyBarsCard } from "@/components/chamados/chamados-charts";
 import { ChamadosModalsLayer } from "@/components/chamados/chamados-modals-layer";
 import { CategoryTable, LojaTable } from "@/components/chamados/chamados-rank-tables";
 import { useChamadosDashboard } from "@/lib/hooks/use-chamados-dashboard";
 
 export default function ChamadosPage() {
+  const { token, profile, logout } = useAuth();
+
   const {
     loading,
     error,
@@ -61,7 +66,7 @@ export default function ChamadosPage() {
     totalOsModalItems,
     filtered,
     uploadData,
-  } = useChamadosDashboard();
+  } = useChamadosDashboard(token);
 
   if (loading) {
     return <main className="center-message">Carregando painel...</main>;
@@ -83,7 +88,18 @@ export default function ChamadosPage() {
             <a className="menu-item active" href="#">Chamados Corretivas</a>
             <a className="menu-item" href="#">Custos</a>
             <a className="menu-item" href="#">Monitoramento</a>
+            {profile?.can_import || profile?.is_admin_principal ? (
+              <Link className="menu-item" href="/admin/importacao">
+                Area Administrativa
+              </Link>
+            ) : null}
           </nav>
+          <div className="auth-user-box">
+            <small>{profile?.email}</small>
+            <button className="auth-logout-btn" type="button" onClick={() => void logout()}>
+              Sair
+            </button>
+          </div>
         </div>
         <small className="update-label">Data de atualizacao: {uploadData}</small>
       </aside>

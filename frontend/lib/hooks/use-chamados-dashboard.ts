@@ -49,7 +49,7 @@ function normalize(value: string | null | undefined): string {
     .trim();
 }
 
-export function useChamadosDashboard() {
+export function useChamadosDashboard(token: string | null) {
   // UI state (filters, interactions and modal visibility)
   const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
@@ -68,7 +68,13 @@ export function useChamadosDashboard() {
     async function load() {
       try {
         setLoading(true);
-        const data = await fetchDashboardCorretivas();
+        if (!token) {
+          setError("Sessao nao encontrada.");
+          setDashboard(null);
+          return;
+        }
+
+        const data = await fetchDashboardCorretivas(token);
         setDashboard(data);
         setError(null);
       } catch (err) {
@@ -80,7 +86,7 @@ export function useChamadosDashboard() {
     }
 
     void load();
-  }, []);
+  }, [token]);
 
   // Filter options and data slices
   const dados = dashboard?.dados ?? [];

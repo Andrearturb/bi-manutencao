@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.auth import AuthenticatedUser, require_authenticated_user
 from app.db.session import SessionLocal
 from app.repositories.dashboard_cache_repository import DashboardCacheRepository
 from app.schemas.dashboard import DashboardResponse
@@ -9,7 +10,9 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
 @router.get("/manutencao", response_model=DashboardResponse)
-def get_dashboard_manutencao() -> DashboardResponse:
+def get_dashboard_manutencao(
+    _: AuthenticatedUser = Depends(require_authenticated_user),
+) -> DashboardResponse:
     db: Session = SessionLocal()
 
     try:
