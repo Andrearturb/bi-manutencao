@@ -15,7 +15,7 @@ import { useCustosDashboard } from "@/lib/hooks/use-custos-dashboard";
 
 /** Tela principal do painel de custos. */
 export default function CustosPage() {
-  const { token, profile, logout } = useAuth();
+  const { token, logout } = useAuth();
   const {
     loading,
     error,
@@ -62,14 +62,8 @@ export default function CustosPage() {
               Chamados Corretivas
             </Link>
             <span className="menu-item active">Custos</span>
-            {profile?.can_import || profile?.is_admin_principal ? (
-              <Link className="menu-item" href="/admin/importacao">
-                Área Administrativa
-              </Link>
-            ) : null}
           </nav>
           <div className="auth-user-box">
-            <small>{profile?.email}</small>
             <button className="auth-logout-btn" type="button" onClick={() => void logout()}>
               Sair
             </button>

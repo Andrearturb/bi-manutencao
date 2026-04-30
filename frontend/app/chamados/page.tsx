@@ -28,7 +28,7 @@ import { useChamadosDashboard } from "@/lib/hooks/use-chamados-dashboard";
 import { type EscopoPainel } from "@/lib/types";
 
 export default function ChamadosPage() {
-  const { token, profile, logout } = useAuth();
+  const { token, logout } = useAuth();
 
   const {
     loading,
@@ -108,14 +108,8 @@ export default function ChamadosPage() {
             <Link className="menu-item" href="/custos">
               Custos
             </Link>
-            {profile?.can_import || profile?.is_admin_principal ? (
-              <Link className="menu-item" href="/admin/importacao">
-                Área Administrativa
-              </Link>
-            ) : null}
           </nav>
           <div className="auth-user-box">
-            <small>{profile?.email}</small>
             <button className="auth-logout-btn" type="button" onClick={() => void logout()}>
               Sair
             </button>
