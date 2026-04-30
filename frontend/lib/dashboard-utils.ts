@@ -1,5 +1,12 @@
+/**
+ * Utilitários de manipulação e agregação de dados do dashboard.
+ *
+ * Funções responsáveis por parsing, filtragem, agregação e métricas usadas
+ * pelos hooks de dashboard (chamados e custos).
+ */
 import { DashboardItem, FilterState } from "@/lib/types";
 
+/** Estados considerados encerrados para cálculos de produtividade e custo médio. */
 const STATUS_ENCERRADOS = [
   "chamado concluido",
   "concluido",
@@ -13,8 +20,6 @@ function normalize(value: string | null | undefined): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-
-    
 }
 
 export function parseDate(value: string | null | undefined): Date | null {
@@ -40,6 +45,7 @@ export function filterDados(dados: DashboardItem[], filter: FilterState): Dashbo
   });
 }
 
+/** Filtra valores nulos, remove duplicatas e ordena opções exibidas em filtros. */
 export function uniqueOptions(dados: DashboardItem[], getter: (item: DashboardItem) => string | null | undefined): string[] {
   return Array.from(
     new Set(
@@ -79,6 +85,7 @@ function normalizeSlaStatus(value: string | null | undefined): string {
   return "";
 }
 
+/** Calcula a taxa de SLA com base nos chamados no prazo e atrasados. */
 export function calcSlaMetrics(dados: DashboardItem[]): SlaMetrics {
   let noPrazo = 0;
   let atrasado = 0;
@@ -104,6 +111,7 @@ export function calcSlaPercent(dados: DashboardItem[]): number {
   return calcSlaMetrics(dados).percent;
 }
 
+/** Calcula o custo médio dos chamados encerrados com valor aprovado válido. */
 export function calcCustoMedio(dados: DashboardItem[]): number {
   const encerrados = dados.filter((item) => STATUS_ENCERRADOS.includes(normalize(item.status)));
   if (encerrados.length === 0) return 0;
@@ -127,7 +135,7 @@ export function calcCustoMedio(dados: DashboardItem[]): number {
       return Number.isFinite(parsed) ? acc + parsed : acc;
     }
 
-    // Chamado encerrado sem custo deve entrar no denominador como zero.
+    // Chamado encerrado sem custo entra no denominador como zero.
     return acc;
   }, 0);
 
@@ -159,6 +167,7 @@ export type MonthlyPoint = {
   concluidos: number;
 };
 
+/** Agrupa chamados por mês para uso em gráficos de evolução. */
 export function monthlySeries(dados: DashboardItem[]): MonthlyPoint[] {
   const byMonth = new Map<string, { total: number; concluidos: number; monthOrder: number }>();
 

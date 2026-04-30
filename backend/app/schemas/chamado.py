@@ -1,3 +1,5 @@
+"""Esquemas de validação de dados de chamados."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -5,6 +7,8 @@ from pydantic import BaseModel
 
 
 class ChamadoBase(BaseModel):
+    """Esquema base com campos de um chamado de manutenção."""
+
     ticket: Optional[str] = None
 
     status: Optional[str] = None
@@ -40,4 +44,6 @@ class ChamadoBase(BaseModel):
 
 
 class ChamadoResponse(ChamadoBase):
+    """Esquema de resposta para um chamado."""
+
     pass

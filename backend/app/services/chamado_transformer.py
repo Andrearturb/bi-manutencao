@@ -1,7 +1,9 @@
+"""Serviço para transformar dados brutos de planilhas em registros tratados."""
+
+import ast
+import json
 import math
 import re
-import json
-import ast
 import unicodedata
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -9,7 +11,7 @@ from typing import Any
 
 
 class ChamadoTransformer:
-    """Responsável por transformar os dados brutos da planilha."""
+    """Transforma dados brutos de chamados em registros normalizados com validação."""
 
     STATUS_QUE_ENTRAM_NO_SLA = {
         "chamado concluido",
@@ -28,6 +30,7 @@ class ChamadoTransformer:
     }
 
     def normalizar_texto(self, valor: Any) -> str | None:
+        """Normaliza um valor para texto limpo ou retorna None."""
         if valor is None:
             return None
 
@@ -41,6 +44,7 @@ class ChamadoTransformer:
         return re.sub(r"\s+", " ", texto)
 
     def normalizar_comparacao(self, valor: Any) -> str:
+        """Normaliza um valor para comparação, removendo acentos e convertendo para minúsculo."""
         texto = self.normalizar_texto(valor) or ""
         texto = unicodedata.normalize("NFKD", texto)
         texto = "".join(
@@ -51,6 +55,7 @@ class ChamadoTransformer:
         return texto.lower().strip()
 
     def limpar_loja(self, valor: Any) -> str | None:
+        """Extrai o nome da loja removendo sufixos opcionais."""
         texto = self.normalizar_texto(valor)
         if not texto:
             return None
@@ -58,6 +63,7 @@ class ChamadoTransformer:
         return texto.split("|")[0].strip()
 
     def limpar_fornecedor(self, valor: Any) -> str | None:
+        """Extrai o nome do fornecedor removendo código SAP quando presente."""
         texto = self.normalizar_texto(valor)
         if not texto:
             return None
@@ -68,6 +74,7 @@ class ChamadoTransformer:
         return texto
 
     def normalizar_status(self, valor: Any) -> str | None:
+        """Normaliza status conforme dicionário de transformações."""
         texto = self.normalizar_texto(valor)
         if not texto:
             return None
@@ -76,6 +83,7 @@ class ChamadoTransformer:
         return self.STATUS_NORMALIZADOS.get(chave, texto)
 
     def parse_data(self, valor: Any) -> datetime | None:
+        """Converte múltiplos formatos de data em um datetime normalizado."""
         if valor is None:
             return None
 
@@ -132,6 +140,7 @@ class ChamadoTransformer:
         return None
 
     def parse_decimal(self, valor: Any) -> Decimal | None:
+        """Converte um valor em número decimal normalizado."""
         texto = self.normalizar_texto(valor)
         if not texto:
             return None
@@ -144,6 +153,7 @@ class ChamadoTransformer:
             return None
 
     def parse_os_info(self, valor: Any) -> tuple[str | None, str | None]:
+        """Extrai status e URL de informações de ordem de serviço."""
         if valor is None:
             return (None, None)
 
@@ -196,6 +206,7 @@ class ChamadoTransformer:
         return (status, url)
 
     def parse_status_assinatura(self, valor: Any) -> str | None:
+        """Normaliza o status de assinatura do documento."""
         texto = self.normalizar_texto(valor)
         if not texto:
             return None

@@ -1,3 +1,5 @@
+/** Camada de modais reutilizáveis do painel de chamados. */
+
 import { type Dispatch, type SetStateAction } from "react";
 
 import { ChamadosDetalhesModal, statusToneFromKey } from "@/components/chamados/chamados-detalhes-modal";
@@ -72,7 +74,7 @@ export function ChamadosModalsLayer({
 
       {totalModalOpen ? (
         <ChamadosDetalhesModal
-          titulo="Total de Chamados"
+          titulo="Total de chamados"
           subtitulo={`${filtered.length} chamados`}
           items={filtered}
           onClose={() => setTotalModalOpen(false)}

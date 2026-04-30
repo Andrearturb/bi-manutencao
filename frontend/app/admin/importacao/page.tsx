@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Página administrativa de importação e gerenciamento de permissões.
+ *
+ * - Upload de planilhas de manutenção (corretiva/preventiva)
+ * - Gerenciamento de permissões de importação para usuários
+ */
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -15,6 +22,7 @@ import {
 } from "@/lib/api";
 import { type TipoManutencao } from "@/lib/types";
 
+/** Tela administrativa para importar planilhas e gerenciar permissões. */
 export default function AdminImportacaoPage() {
   const { token, profile, logout } = useAuth();
 
@@ -49,7 +57,7 @@ export default function AdminImportacaoPage() {
       setPermissions(permissionsData);
       setPermissionsError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao carregar usuarios e permissoes.";
+      const message = err instanceof Error ? err.message : "Falha ao carregar usuários e permissões.";
       setPermissionsError(message);
     }
   }
@@ -68,7 +76,7 @@ export default function AdminImportacaoPage() {
 
     try {
       const response = await uploadPlanilhaManutencao(token, selectedFile, tipoManutencao);
-      setUploadMessage(response.mensagem ?? "Importacao concluida com sucesso.");
+      setUploadMessage(response.mensagem ?? "Importação concluída com sucesso.");
       setSelectedFile(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao importar planilha.";
@@ -88,7 +96,7 @@ export default function AdminImportacaoPage() {
       await refreshUsersAndPermissions();
       setPermissionsError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao liberar usuario.";
+      const message = err instanceof Error ? err.message : "Falha ao liberar usuário.";
       setPermissionsError(message);
     } finally {
       setSavingPermission(false);
@@ -104,7 +112,7 @@ export default function AdminImportacaoPage() {
       await refreshUsersAndPermissions();
       setPermissionsError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao revogar usuario.";
+      const message = err instanceof Error ? err.message : "Falha ao revogar usuário.";
       setPermissionsError(message);
     } finally {
       setSavingPermission(false);
@@ -113,14 +121,15 @@ export default function AdminImportacaoPage() {
 
   return (
     <main className="admin-shell">
+      {/* Cabeçalho administrativo: ações e vínculo ao dashboard */}
       <header className="admin-header card">
         <div>
-          <h1>Area Administrativa</h1>
-          <p>Acesso corporativo ativo para {profile?.email ?? "usuario"}.</p>
+          <h1>Área Administrativa</h1>
+          <p>Acesso corporativo ativo para {profile?.email ?? "usuário"}.</p>
         </div>
         <div className="admin-header-actions">
           <Link href="/chamados" className="admin-link-btn">
-            Voltar ao Dashboard
+            Voltar ao dashboard
           </Link>
           <button type="button" className="auth-logout-btn" onClick={() => void logout()}>
             Sair
@@ -129,13 +138,14 @@ export default function AdminImportacaoPage() {
       </header>
 
       <section className="card admin-section">
+        {/* Importação: selecionar tipo e enviar arquivo */}
         <h2>Importar planilha</h2>
         {!canImport ? (
-          <p className="auth-error">Seu e-mail ainda nao possui liberacao de importacao.</p>
+          <p className="auth-error">Seu e-mail ainda não possui liberação de importação.</p>
         ) : (
           <>
             <label className="select-field" style={{ maxWidth: 320 }}>
-              <span>Tipo de manutencao</span>
+              <span>Tipo de manutenção</span>
               <select
                 value={tipoManutencao}
                 onChange={(event) => setTipoManutencao(event.target.value as TipoManutencao)}
@@ -164,7 +174,8 @@ export default function AdminImportacaoPage() {
       </section>
 
       <section className="card admin-section">
-        <h2>Permissoes de Usuarios</h2>
+        {/* Permissões: listagem e controles de liberar/revogar */}
+        <h2>Permissões de usuários</h2>
         {!isPrincipalAdmin ? (
           <p className="auth-error">
             Somente o admin principal pode liberar novos e-mails para importar.
@@ -184,7 +195,7 @@ export default function AdminImportacaoPage() {
                 disabled={!emailInput.trim() || savingPermission}
                 onClick={() => void handleGrantPermission(emailInput.trim())}
               >
-                Liberar importacao
+                Liberar importação
               </button>
             </div>
 
@@ -196,8 +207,8 @@ export default function AdminImportacaoPage() {
                   <tr>
                     <th>E-mail</th>
                     <th>Tipo</th>
-                    <th>Importacao</th>
-                    <th>Acao</th>
+                    <th>Importação</th>
+                    <th>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -206,7 +217,7 @@ export default function AdminImportacaoPage() {
                     return (
                       <tr key={user.email}>
                         <td>{user.email}</td>
-                        <td>{user.is_admin_principal ? "Admin principal" : "Usuario"}</td>
+                        <td>{user.is_admin_principal ? "Admin principal" : "Usuário"}</td>
                         <td>{user.can_import ? "Liberado" : "Sem acesso"}</td>
                         <td>
                           {user.is_admin_principal ? (

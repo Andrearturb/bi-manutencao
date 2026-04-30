@@ -1,3 +1,7 @@
+/**
+ * Layout raiz da aplicação. Envolve as páginas no provedor de autenticação
+ * e no componente `AuthGate` que apresenta a tela de login quando necessário.
+ */
 import type { Metadata } from "next";
 
 import { AuthGate } from "@/components/auth/auth-gate";
@@ -6,7 +10,7 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BI Manutencao | Corretivas",
+  title: "BI Manutenção | Corretivas",
   description: "Painel de chamados corretivos",
 };
 

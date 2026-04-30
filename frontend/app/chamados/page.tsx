@@ -1,5 +1,18 @@
 "use client";
 
+/**
+ * Página principal dos chamados.
+ *
+ * Estrutura geral:
+ * - Sidebar: navegação e informações do usuário
+ * - Header de filtros: campos para restringir dados do dashboard
+ * - KPIs: cartões com métricas principais
+ * - Tabelas/Gráficos: rankings e visualizações por analista/mês
+ * - Modais: camadas de detalhe/exportação abertas pelos KPIs
+ *
+ * Dados e handlers são providos por `useChamadosDashboard`.
+ */
+
 import Link from "next/link";
 
 import {
@@ -83,20 +96,21 @@ export default function ChamadosPage() {
 
   return (
     <main className="dashboard-shell">
+      {/* Sidebar: navegação e informações do usuário */}
       <aside className="sidebar">
         <div>
-          <h1 className="brand">Gentil Negocios</h1>
-          <button className="menu-highlight">Paineis</button>
+          <h1 className="brand">Gentil Negócios</h1>
+          <button className="menu-highlight">Painéis</button>
           <nav className="menu">
-            <button type="button" className={`menu-item menu-button ${escopoPainel === "ambas" ? "active" : ""}`} onClick={() => setEscopoPainel("ambas")}>Inicio</button>
-            <button type="button" className={`menu-item menu-button ${escopoPainel === "preventiva" ? "active" : ""}`} onClick={() => setEscopoPainel("preventiva")}>Chamados Preventivas</button>
-            <button type="button" className={`menu-item menu-button ${escopoPainel === "corretiva" ? "active" : ""}`} onClick={() => setEscopoPainel("corretiva")}>Chamados Corretivas</button>
+            <button type="button" className={`menu-item menu-button ${escopoPainel === "ambas" ? "active" : ""}`} onClick={() => setEscopoPainel("ambas")}>Início</button>
+            <button type="button" className={`menu-item menu-button ${escopoPainel === "preventiva" ? "active" : ""}`} onClick={() => setEscopoPainel("preventiva")}>Chamados preventivos</button>
+            <button type="button" className={`menu-item menu-button ${escopoPainel === "corretiva" ? "active" : ""}`} onClick={() => setEscopoPainel("corretiva")}>Chamados corretivos</button>
             <Link className="menu-item" href="/custos">
               Custos
             </Link>
             {profile?.can_import || profile?.is_admin_principal ? (
               <Link className="menu-item" href="/admin/importacao">
-                Area Administrativa
+                Área Administrativa
               </Link>
             ) : null}
           </nav>
@@ -107,13 +121,14 @@ export default function ChamadosPage() {
             </button>
           </div>
         </div>
-        <small className="update-label">Data de atualizacao: {uploadData}</small>
+        <small className="update-label">Data de atualização: {uploadData}</small>
       </aside>
 
       <section className="content">
+        {/* Filtros: seleção de dados do dashboard */}
         <header className="filters-grid card">
           <label className="select-field">
-            <span>Tipo de manutencao</span>
+            <span>Tipo de manutenção</span>
             <select
               value={escopoPainel}
               onChange={(event) => setEscopoPainel(event.target.value as EscopoPainel)}
@@ -125,12 +140,13 @@ export default function ChamadosPage() {
           </label>
           <SelectField label="Status do Chamado" value={filters.status} onChange={(value) => updateFilter("status", value)} options={statusOptions} />
           <SelectField label="Loja" value={filters.loja} onChange={(value) => updateFilter("loja", value)} options={lojaOptions} />
-          <SelectField label="Praca" value={filters.praca} onChange={(value) => updateFilter("praca", value)} options={pracaOptions} />
+          <SelectField label="Praça" value={filters.praca} onChange={(value) => updateFilter("praca", value)} options={pracaOptions} />
           <SelectField label="Categoria" value={filters.categoria} onChange={(value) => updateFilter("categoria", value)} options={categoriaOptions} />
-          <SelectField label="Mes" value={filters.mes} onChange={(value) => updateFilter("mes", value)} options={mesOptions} mapLabel={(val) => monthLabel(val)} />
+          <SelectField label="Mês" value={filters.mes} onChange={(value) => updateFilter("mes", value)} options={mesOptions} mapLabel={(val) => monthLabel(val)} />
           <SelectField label="Ano" value={filters.ano} onChange={(value) => updateFilter("ano", value)} options={anoOptions} />
         </header>
 
+        {/* KPIs principais: visão resumida */}
         <section className="kpi-grid top-kpis">
           <KpiCard title="Total de Chamados" value={String(totalChamados)} onClick={() => setTotalModalOpen(true)} />
           <KpiCard title="Total de O.S" value={String(totalOS)} onClick={() => setTotalOsModalOpen(true)} />
@@ -142,6 +158,7 @@ export default function ChamadosPage() {
           />
         </section>
 
+        {/* KPIs de status: acesso rápido por status */}
         <section className="kpi-grid status-kpis">
           <MiniKpi
             title={statusAbertoLabel}
@@ -149,15 +166,16 @@ export default function ChamadosPage() {
             onClick={() => setStatusModal({ key: "em-aberto", titulo: statusAbertoLabel })}
           />
           <MiniKpi title="Em atendimento" value={statusEmAtendimento} onClick={() => setStatusModal({ key: "em-atendimento", titulo: "Em atendimento" })} />
-          <MiniKpi title="Nao Aprovado" value={statusNaoAprovado} onClick={() => setStatusModal({ key: "nao-aprovado", titulo: "Nao Aprovado" })} />
+          <MiniKpi title="Não aprovado" value={statusNaoAprovado} onClick={() => setStatusModal({ key: "nao-aprovado", titulo: "Não aprovado" })} />
           <MiniKpi
             title={statusFinalizadoLabel}
             value={statusSolicitacaoFinalizada}
             onClick={() => setStatusModal({ key: "solicitacao-finalizada", titulo: statusFinalizadoLabel })}
           />
-          <MiniKpi title="Concluidos" value={statusConcluidos} emphasis onClick={() => setStatusModal({ key: "concluidos", titulo: "Concluidos" })} />
+          <MiniKpi title="Concluídos" value={statusConcluidos} emphasis onClick={() => setStatusModal({ key: "concluidos", titulo: "Concluídos" })} />
         </section>
 
+        {/* Rankings e visualizações: tabelas e cartões analíticos */}
         <section className="data-grid">
           <LojaTable rows={lojasRank} onOpenLoja={(loja) => setLojaModal(loja)} />
           <CategoryTable
@@ -177,6 +195,7 @@ export default function ChamadosPage() {
           />
         </section>
 
+        {/* Série mensal de barras */}
         <MonthlyBarsCard
           selectedPeriod={selectedPeriod}
           setSelectedPeriod={setSelectedPeriod}
@@ -184,6 +203,7 @@ export default function ChamadosPage() {
           maxSeries={maxSeries}
         />
 
+        {/* Camada de modais de detalhe e listagens */}
         <ChamadosModalsLayer
           subcategoryModal={subcategoryModal}
           setSubcategoryModal={setSubcategoryModal}

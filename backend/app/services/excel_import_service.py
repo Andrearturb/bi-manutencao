@@ -1,6 +1,8 @@
+"""Serviço para ler e processar arquivos Excel em registros normalizados."""
+
+import unicodedata
 from io import BytesIO
 from typing import Any
-import unicodedata
 
 import pandas as pd
 
@@ -8,7 +10,7 @@ from app.services.chamado_transformer import ChamadoTransformer
 
 
 class ExcelImportService:
-    """Responsável por ler o Excel e converter em registros tratados."""
+    """Lê arquivos Excel e transforma em registros validados de chamados."""
 
     FRAGMENTO_ORIGEM_POR_TIPO = {
         "corretiva": "corretiva",
@@ -47,6 +49,7 @@ class ExcelImportService:
     }
 
     def __init__(self, transformer: ChamadoTransformer) -> None:
+        """Inicializa o serviço com um transformador de dados."""
         self.transformer = transformer
 
     def ler_registros(
@@ -54,6 +57,7 @@ class ExcelImportService:
         file_bytes: bytes,
         tipo_esperado: str | None = None,
     ) -> list[dict[str, Any]]:
+        """Lê arquivo Excel e retorna lista de registros normalizados."""
         dataframe = pd.read_excel(BytesIO(file_bytes), dtype=object)
         colunas_por_alias = self._montar_indice_colunas(dataframe)
 
@@ -93,6 +97,7 @@ class ExcelImportService:
         colunas_por_alias: dict[str, str],
         tipo_esperado: str,
     ) -> None:
+        """Valida que o tipo de manutenção confere com a coluna de origem na planilha."""
         fragmento_esperado = self.FRAGMENTO_ORIGEM_POR_TIPO.get(tipo_esperado)
         if fragmento_esperado is None:
             raise ValueError("Tipo de manutenção inválido.")
@@ -118,6 +123,7 @@ class ExcelImportService:
         )
 
     def _montar_indice_colunas(self, dataframe: pd.DataFrame) -> dict[str, str]:
+        """Cria índice de colunas por alias de campo e letra Excel."""
         indice: dict[str, str] = {}
         for posicao, coluna in enumerate(dataframe.columns):
             nome = "" if coluna is None else str(coluna)
@@ -137,6 +143,7 @@ class ExcelImportService:
         campo: str,
         colunas_por_alias: dict[str, str],
     ) -> str | None:
+        """Encontra a coluna original que correspondé a um campo."""
         aliases = self.ALIASES_POR_CAMPO.get(campo, [])
         for alias in aliases:
             chave = self._normalizar_chave_coluna(alias)
@@ -151,6 +158,7 @@ class ExcelImportService:
         colunas_por_alias: dict[str, str],
         tipo_esperado: str | None,
     ) -> str | None:
+        """Resolve coluna de SLA com prioridade conforme tipo de manutenção."""
         prioridade_por_tipo: dict[str, list[str]] = {
             "corretiva": ["d", "e", "progresso sla", "h"],
             "preventiva": ["e", "progresso sla", "h", "d"],
@@ -175,12 +183,14 @@ class ExcelImportService:
         return fallback_coluna
 
     def _normalizar_chave_coluna(self, valor: str) -> str:
+        """Normaliza um nome de coluna para chave de busca."""
         texto = unicodedata.normalize("NFKD", valor)
         texto = "".join(char for char in texto if not unicodedata.combining(char))
         texto = texto.strip().lower()
         return " ".join(texto.split())
 
     def _obter_nome_coluna_excel(self, index: int) -> str:
+        """Converte índice numérico para letra de coluna Excel (A, B, ..., AA, AB)."""
         resultado = ""
         index += 1
 

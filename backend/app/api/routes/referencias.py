@@ -1,3 +1,5 @@
+"""Rotas de consulta e mapeamento da base de lojas de referência."""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -18,6 +20,8 @@ router = APIRouter(prefix="/referencias", tags=["Referencias"])
 def listar_lojas_referencia(
     _: AuthenticatedUser = Depends(require_authenticated_user),
 ) -> list[LojaReferenciaResponse]:
+    """Lista todas as lojas de referência cadastradas."""
+
     db: Session = SessionLocal()
     try:
         repository = LojaReferenciaRepository(db)
@@ -41,6 +45,8 @@ def obter_loja_referencia_por_sap(
     sap: str,
     _: AuthenticatedUser = Depends(require_authenticated_user),
 ) -> LojaReferenciaResponse:
+    """Busca uma loja de referência pelo código SAP informado."""
+
     db: Session = SessionLocal()
     try:
         repository = LojaReferenciaRepository(db)
@@ -64,6 +70,8 @@ def mapear_saps_em_lojas(
     payload: LojaMapeamentoRequest,
     _: AuthenticatedUser = Depends(require_authenticated_user),
 ) -> LojaMapeamentoResponse:
+    """Mapeia uma lista de SAPs para dados de lojas conhecidas."""
+
     db: Session = SessionLocal()
     try:
         saps_normalizados = [_normalizar_sap(sap) for sap in payload.saps if _normalizar_sap(sap)]
@@ -99,6 +107,8 @@ def mapear_saps_em_lojas(
 
 
 def _normalizar_sap(valor: str) -> str:
+    """Normaliza um SAP removendo espaços e sufixo decimal do Excel."""
+
     texto = (valor or "").strip()
     if not texto:
         return ""

@@ -1,11 +1,19 @@
 "use client";
 
+/**
+ * Página de custos.
+ *
+ * Exibe filtros específicos de custos, KPIs resumidos e rankings por fornecedor/loja.
+ * Utiliza `useCustosDashboard` para obter dados e handlers.
+ */
+
 import Link from "next/link";
 
 import { KpiCard, SelectField } from "@/components/chamados/chamados-cards";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useCustosDashboard } from "@/lib/hooks/use-custos-dashboard";
 
+/** Tela principal do painel de custos. */
 export default function CustosPage() {
   const { token, profile, logout } = useAuth();
   const {
@@ -38,13 +46,14 @@ export default function CustosPage() {
 
   return (
     <main className="dashboard-shell">
+      {/* Sidebar: navegação e informações do usuário */}
       <aside className="sidebar">
         <div>
-          <h1 className="brand">Gentil Negocios</h1>
-          <button className="menu-highlight">Paineis</button>
+          <h1 className="brand">Gentil Negócios</h1>
+          <button className="menu-highlight">Painéis</button>
           <nav className="menu">
             <Link className="menu-item" href="/chamados">
-              Inicio
+              Início
             </Link>
             <Link className="menu-item" href="/chamados">
               Chamados Preventivas
@@ -55,7 +64,7 @@ export default function CustosPage() {
             <span className="menu-item active">Custos</span>
             {profile?.can_import || profile?.is_admin_principal ? (
               <Link className="menu-item" href="/admin/importacao">
-                Area Administrativa
+                Área Administrativa
               </Link>
             ) : null}
           </nav>
@@ -66,13 +75,14 @@ export default function CustosPage() {
             </button>
           </div>
         </div>
-        <small className="update-label">Data de atualizacao: {uploadData}</small>
+        <small className="update-label">Data de atualização: {uploadData}</small>
       </aside>
 
       <section className="content">
+        {/* Filtros: seleção para visualizar custos filtrados */}
         <header className="filters-grid card custos-filters-grid">
           <SelectField
-            label="Tipo de manutencao"
+            label="Tipo de manutenção"
             value={filters.tipoManutencao}
             onChange={(value) => updateFilter("tipoManutencao", value)}
             options={tipoOptions}
@@ -85,27 +95,30 @@ export default function CustosPage() {
             options={fornecedorOptions}
           />
           <SelectField label="Loja" value={filters.loja} onChange={(value) => updateFilter("loja", value)} options={lojaOptions} />
-          <SelectField label="Praca" value={filters.praca} onChange={(value) => updateFilter("praca", value)} options={pracaOptions} />
-          <SelectField label="Mes" value={filters.mes} onChange={(value) => updateFilter("mes", value)} options={mesOptions} mapLabel={monthLabel} />
+          <SelectField label="Praça" value={filters.praca} onChange={(value) => updateFilter("praca", value)} options={pracaOptions} />
+          <SelectField label="Mês" value={filters.mes} onChange={(value) => updateFilter("mes", value)} options={mesOptions} mapLabel={monthLabel} />
           <SelectField label="Ano" value={filters.ano} onChange={(value) => updateFilter("ano", value)} options={anoOptions} />
         </header>
 
+        {/* KPIs principais de custos */}
         <section className="kpi-grid custos-main-kpis">
-          <KpiCard title="Manutencao Preventiva" value={formatCurrency(totalPreventiva)} />
-          <KpiCard title="Manutencao Corretiva" value={formatCurrency(totalCorretiva)} />
-          <KpiCard title="Custo manutencoes" value={formatCurrency(totalCustos)} />
+          <KpiCard title="Manutenção preventiva" value={formatCurrency(totalPreventiva)} />
+          <KpiCard title="Manutenção corretiva" value={formatCurrency(totalCorretiva)} />
+          <KpiCard title="Custo das manutenções" value={formatCurrency(totalCustos)} />
         </section>
 
+        {/* KPIs secundários de comparação */}
         <section className="kpi-grid custos-secondary-kpis">
-          <KpiCard title="% Custos x Orcado" value="N/D" subtitle="Sem base de orcamento no momento" />
+          <KpiCard title="% Custos x Orçado" value="N/D" subtitle="Sem base de orçamento no momento" />
           <KpiCard
             title="% Custos x Realizado"
             value={percentualCustosVsRealizado == null ? "N/D" : `${percentualCustosVsRealizado.toFixed(2)}%`}
-            subtitle="Comparativo com valores de manutencao"
+            subtitle="Comparativo com valores de manutenção"
           />
-          <KpiCard title="% Desvio" value="N/D" subtitle="Aguardando regra de orcamento" />
+          <KpiCard title="% Desvio" value="N/D" subtitle="Aguardando regra de orçamento" />
         </section>
 
+        {/* Rankings e barras: fornecedores e custos por loja */}
         <section className="custos-data-grid">
           <article className="card rank-table custos-table">
             <h3>Fornecedor</h3>

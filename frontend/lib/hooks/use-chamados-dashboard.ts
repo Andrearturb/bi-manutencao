@@ -1,3 +1,9 @@
+/**
+ * Hook `useChamadosDashboard` — encapsula a view-model para a página de chamados.
+ *
+ * Fornece estado de filtros, métricas, rankings, séries e controle de modais.
+ */
+
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 
 import { type StatusModalKey } from "@/components/chamados/chamados-detalhes-modal";
@@ -25,6 +31,8 @@ const DEFAULT_FILTERS: FilterState = {
   ano: "todos",
 };
 
+const ANALYST_PALETTE = ["#2b8be8", "#2034a8", "#6a1f8f", "#d86a31", "#0f766e"];
+
 export type RankRow = {
   label: string;
   qtd: number;
@@ -50,7 +58,7 @@ function normalize(value: string | null | undefined): string {
 }
 
 export function useChamadosDashboard(token: string | null) {
-  // UI state (filters, interactions and modal visibility)
+  // Estado de interface: filtros, interações e modais.
   const [dashboardManutencao, setDashboardManutencao] = useState<DashboardManutencaoPayload | null>(null);
   const [escopoPainel, setEscopoPainel] = useState<EscopoPainel>("corretiva");
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
@@ -70,7 +78,7 @@ export function useChamadosDashboard(token: string | null) {
       try {
         setLoading(true);
         if (!token) {
-          setError("Sessao nao encontrada.");
+          setError("Sessão não encontrada.");
           setDashboardManutencao(null);
           return;
         }
@@ -133,8 +141,8 @@ export function useChamadosDashboard(token: string | null) {
     };
   }, [dashboardManutencao, escopoPainel]);
 
-  // Filter options and data slices
-  const dados = dashboard?.dados ?? [];
+  // Opções de filtro e recortes de dados.
+  const dados = useMemo(() => dashboard?.dados ?? [], [dashboard]);
 
   const statusOptions = useMemo(() => {
     const options = uniqueOptions(dados, (item) => item.status);
@@ -236,7 +244,7 @@ export function useChamadosDashboard(token: string | null) {
     [filtered],
   );
 
-  // KPI values shown on cards
+  // Valores exibidos nos cards de KPI.
   const totalChamados = filtered.length;
   const totalOS = countTotalOs(filtered);
   const custoMedio = calcCustoMedio(filtered);
@@ -295,7 +303,6 @@ export function useChamadosDashboard(token: string | null) {
     return result;
   }, [filtered]);
 
-  const analystPalette = ["#2b8be8", "#2034a8", "#6a1f8f", "#d86a31", "#0f766e"];
   const analystSlices = useMemo<AnalystSlice[]>(() => {
     const base = analistasRank.filter((item) => item.qtd > 0);
     const total = base.reduce((acc, item) => acc + item.qtd, 0);
@@ -313,7 +320,7 @@ export function useChamadosDashboard(token: string | null) {
         start,
         end,
         mid: (start + end) / 2,
-        color: analystPalette[index % analystPalette.length],
+        color: ANALYST_PALETTE[index % ANALYST_PALETTE.length],
       };
     });
   }, [analistasRank]);
@@ -323,7 +330,7 @@ export function useChamadosDashboard(token: string | null) {
       ? `conic-gradient(${analystSlices.map((item) => `${item.color} ${item.start}% ${item.end}%`).join(", ")})`
       : "#d7e0ea";
 
-  // Interaction handler for ring selection in the analyst donut chart
+  // Manipula a seleção por clique no anel do gráfico de analistas.
   function handleDonutClick(event: MouseEvent<HTMLDivElement>) {
     if (analystSlices.length === 0) return;
 
@@ -337,7 +344,7 @@ export function useChamadosDashboard(token: string | null) {
     const innerRadius = outerRadius * 0.33;
     const distance = Math.hypot(dx, dy);
 
-    // Consider only clicks on the ring area.
+    // Considera apenas cliques na área do anel.
     if (distance < innerRadius || distance > outerRadius) return;
 
     const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI;
@@ -415,7 +422,7 @@ export function useChamadosDashboard(token: string | null) {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
-  // View model consumed by the page component
+  // View model consumido pelo componente de página.
   return {
     loading,
     error,

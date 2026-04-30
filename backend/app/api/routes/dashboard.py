@@ -1,3 +1,5 @@
+"""Rotas de leitura dos dados consolidados do dashboard."""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -13,6 +15,8 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 def get_dashboard_manutencao(
     _: AuthenticatedUser = Depends(require_authenticated_user),
 ) -> DashboardManutencaoResponse:
+    """Retorna os dados consolidados de manutenção corretiva e preventiva."""
+
     db: Session = SessionLocal()
 
     try:
@@ -37,6 +41,8 @@ def get_dashboard_manutencao(
 def get_dashboard_custos(
     _: AuthenticatedUser = Depends(require_authenticated_user),
 ) -> DashboardCustosResponse:
+    """Retorna os dados consolidados de custos do dashboard."""
+
     db: Session = SessionLocal()
 
     try:
@@ -61,6 +67,8 @@ def get_dashboard_custos(
 
 
 def _payload_vazio() -> dict:
+    """Cria o payload vazio usado quando não há cache de manutenção."""
+
     return {
         "dados": [],
         "upload": {
@@ -72,6 +80,8 @@ def _payload_vazio() -> dict:
 
 
 def _payload_vazio_custos() -> dict:
+    """Cria o payload vazio usado quando não há cache de custos."""
+
     return {
         "dadosCustos": [],
         "uploadCustos": {

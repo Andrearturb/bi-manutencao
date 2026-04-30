@@ -1,3 +1,5 @@
+/** Componentes de gráficos da área de chamados. */
+
 import { type MouseEvent } from "react";
 
 import { type MonthlyPoint } from "@/lib/dashboard-utils";
@@ -20,7 +22,7 @@ export function AnalystDonutCard({
 }: AnalystDonutCardProps) {
   return (
     <article className="card donut-card">
-      <h3>Chamados por Analistas</h3>
+      <h3>Chamados por analistas</h3>
       {selectedAnalyst ? (
         <button type="button" className="analyst-filter-pill" onClick={() => setSelectedAnalyst(null)}>
           Analista: {selectedAnalyst} (limpar)
@@ -93,10 +95,10 @@ type MonthlyBarsCardProps = {
 export function MonthlyBarsCard({ selectedPeriod, setSelectedPeriod, series, maxSeries }: MonthlyBarsCardProps) {
   return (
     <article className="card bars-card">
-      <h3>Chamados Concluidos x Chamados Totais</h3>
+      <h3>Chamados concluídos x chamados totais</h3>
       {selectedPeriod ? (
         <button type="button" className="period-filter-pill" onClick={() => setSelectedPeriod(null)}>
-          Periodo: {selectedPeriod} (limpar)
+          Período: {selectedPeriod} (limpar)
         </button>
       ) : null}
 

@@ -1,10 +1,17 @@
 "use client";
 
+/**
+ * Helpers de autenticação Microsoft (MSAL) utilizados pelo provedor de autenticação.
+ *
+ * Fornece funções de login/logout e detecta se o fluxo está configurado via variáveis
+ * de ambiente para habilitar o botão de login corporativo na UI.
+ */
 import { PublicClientApplication, type PopupRequest } from "@azure/msal-browser";
 
 const tenantId = process.env.NEXT_PUBLIC_AZURE_TENANT_ID;
 const clientId = process.env.NEXT_PUBLIC_AZURE_CLIENT_ID;
 
+/** Indica se o login Microsoft está configurado no frontend. */
 export const authConfigured = Boolean(tenantId && clientId);
 
 const authority = tenantId
@@ -30,14 +37,14 @@ const msalApp = new PublicClientApplication({
 
 export async function loginWithMicrosoft(): Promise<string> {
   if (!authConfigured) {
-    throw new Error("Login Microsoft nao configurado no frontend.");
+    throw new Error("Login Microsoft não configurado no frontend.");
   }
 
   await msalApp.initialize();
   const result = await msalApp.loginPopup(loginRequest);
 
   if (!result.idToken) {
-    throw new Error("Nao foi possivel obter o token de login Microsoft.");
+    throw new Error("Não foi possível obter o token de login Microsoft.");
   }
 
   return result.idToken;

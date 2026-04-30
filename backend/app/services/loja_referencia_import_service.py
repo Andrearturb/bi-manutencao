@@ -1,3 +1,5 @@
+"""Serviço de leitura e normalização de planilhas de lojas de referência."""
+
 from io import BytesIO
 import unicodedata
 
@@ -5,6 +7,8 @@ import pandas as pd
 
 
 class LojaReferenciaImportService:
+    """Lê planilhas de lojas e converte para registros normalizados."""
+
     ALIASES = {
         "sap": ["sap", "id sap", "codigo sap", "referencia sap", "id_sap"],
         "nome_loja": [
@@ -19,6 +23,8 @@ class LojaReferenciaImportService:
     }
 
     def ler_registros(self, file_bytes: bytes) -> list[dict]:
+        """Extrai lojas únicas de uma planilha e remove duplicidades por SAP."""
+
         dataframe = pd.read_excel(BytesIO(file_bytes), dtype=object)
         indice = self._montar_indice_colunas(dataframe)
 
@@ -55,6 +61,8 @@ class LojaReferenciaImportService:
         return registros
 
     def _montar_indice_colunas(self, dataframe: pd.DataFrame) -> dict[str, str]:
+        """Cria um índice de colunas normalizadas para facilitar lookup."""
+
         indice: dict[str, str] = {}
         for coluna in dataframe.columns:
             nome = "" if coluna is None else str(coluna)
@@ -64,6 +72,8 @@ class LojaReferenciaImportService:
         return indice
 
     def _resolver_coluna(self, indice: dict[str, str], campo: str) -> str | None:
+        """Resolve a coluna de um campo usando os aliases conhecidos."""
+
         for alias in self.ALIASES.get(campo, []):
             chave = self._normalizar_chave(alias)
             if chave in indice:
@@ -71,12 +81,16 @@ class LojaReferenciaImportService:
         return None
 
     def _normalizar_chave(self, valor: str) -> str:
+        """Remove acentos e padroniza uma chave textual para comparação."""
+
         texto = unicodedata.normalize("NFKD", valor)
         texto = "".join(char for char in texto if not unicodedata.combining(char))
         texto = texto.strip().lower()
         return " ".join(texto.split())
 
     def _normalizar_texto(self, valor: object) -> str | None:
+        """Limpa textos vazios e normaliza espaçamento."""
+
         if valor is None:
             return None
         texto = str(valor).strip()

@@ -1,3 +1,5 @@
+"""Repositório para persistência de dados de custos."""
+
 from datetime import datetime
 
 from sqlalchemy import delete
@@ -7,7 +9,10 @@ from app.models.custo_tratado import CustoTratado
 
 
 class CustoRepository:
+    """Gerencia operações de CRUD para registros de custos."""
+
     def __init__(self, db: Session) -> None:
+        """Inicializa repositório com sessão de banco de dados."""
         self.db = db
 
     def substituir_todos(
@@ -16,6 +21,7 @@ class CustoRepository:
         nome_arquivo: str,
         upload_data: datetime,
     ) -> None:
+        """Remove todos os registros de custos e insere novo lote."""
         self.db.execute(delete(CustoTratado))
 
         for registro in registros:

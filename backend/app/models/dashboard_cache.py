@@ -1,3 +1,5 @@
+"""Modelo ORM para cache de dados do dashboard."""
+
 from sqlalchemy import DateTime, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -6,6 +8,8 @@ from app.db.base import Base
 
 
 class DashboardCache(Base):
+    """Armazena dados em cache do dashboard por módulo."""
+
     __tablename__ = "dashboard_cache"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

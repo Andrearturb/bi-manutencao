@@ -1,3 +1,4 @@
+/** Item único de chamado exibido nos painéis e modais. */
 export type DashboardItem = {
   ticket?: string | null;
   status?: string | null;
@@ -26,6 +27,7 @@ export type DashboardItem = {
   createdOn?: string | null;
 };
 
+/** Payload principal do dashboard de chamados. */
 export type DashboardPayload = {
   dados: DashboardItem[];
   sla: {
@@ -41,6 +43,7 @@ export type DashboardPayload = {
   };
 };
 
+/** Payload consolidado com manutenção corretiva e preventiva. */
 export type DashboardManutencaoPayload = {
   dadosCorretivas: DashboardItem[];
   dadosPreventivas: DashboardItem[];
@@ -51,6 +54,7 @@ export type DashboardManutencaoPayload = {
 export type TipoManutencao = "corretiva" | "preventiva";
 export type EscopoPainel = TipoManutencao | "ambas";
 
+/** Item de custo exibido no painel financeiro. */
 export type DashboardCustoItem = {
   divisao?: string | null;
   numero_documento?: string | null;
@@ -70,11 +74,13 @@ export type DashboardCustoItem = {
   valor?: number | null;
 };
 
+/** Payload principal do dashboard de custos. */
 export type DashboardCustosPayload = {
   dadosCustos: DashboardCustoItem[];
   uploadCustos: DashboardPayload["upload"];
 };
 
+/** Estado dos filtros dos painéis. */
 export type FilterState = {
   status: string;
   loja: string;

@@ -1,3 +1,5 @@
+/** Modal com detalhes tabulares dos chamados exibidos no painel. */
+
 import { DashboardItem } from "@/lib/types";
 
 export type ModalTone = "default" | "aberto" | "atendimento" | "nao-aprovado" | "finalizada" | "concluido";
@@ -19,7 +21,7 @@ type ChamadosDetalhesModalProps = {
 };
 
 function formatValorAprovado(value: DashboardItem["valorAprovado"]): string {
-  // Backend can send currency as number or localized string; normalize both for a stable UI.
+  // O backend pode enviar valor numérico ou string local; normalizamos para uma exibição estável.
   if (typeof value === "number") {
     return Number.isFinite(value) ? `R$ ${value.toLocaleString("pt-BR")}` : "-";
   }
@@ -33,7 +35,7 @@ function formatValorAprovado(value: DashboardItem["valorAprovado"]): string {
 }
 
 export function statusToneFromKey(key: StatusModalKey): ModalTone {
-  // Keeps visual mapping in one place so status cards and modal styles stay in sync.
+  // Mantém o mapeamento visual em um único ponto para cartões e modais ficarem sincronizados.
   if (key === "em-aberto") return "aberto";
   if (key === "em-atendimento") return "atendimento";
   if (key === "nao-aprovado") return "nao-aprovado";
@@ -68,22 +70,22 @@ export function ChamadosDetalhesModal({
               <tr>
                 <th>Ticket</th>
                 <th>Status</th>
-                {showMotivoNaoAprovacao ? <th>Motivo Nao Aprovacao</th> : null}
+                {showMotivoNaoAprovacao ? <th>Motivo não aprovação</th> : null}
                 <th>SLA</th>
                 <th>Loja</th>
-                <th>Praca</th>
+                <th>Praça</th>
                 <th>Categoria</th>
                 <th>Subcategoria</th>
                 <th>Analista</th>
                 <th>Requisitante</th>
                 <th>Fornecedor</th>
-                <th>Descricao</th>
-                <th>Solucao</th>
-                <th>Data Req.</th>
-                <th>Data Concl.</th>
+                <th>Descrição</th>
+                <th>Solução</th>
+                <th>Data req.</th>
+                <th>Data concl.</th>
                 <th>Valor</th>
-                <th>OS Status</th>
-                <th>OS URL</th>
+                <th>Status da O.S</th>
+                <th>URL da O.S</th>
               </tr>
             </thead>
             <tbody>
@@ -106,7 +108,15 @@ export function ChamadosDetalhesModal({
                   <td>{item.dataConclusao ? new Date(item.dataConclusao).toLocaleDateString("pt-BR") : "-"}</td>
                   <td>{formatValorAprovado(item.valorAprovado)}</td>
                   <td>{item.os?.status ?? "-"}</td>
-                  <td>{item.os?.url ? <a href={item.os.url} target="_blank" rel="noreferrer" className="os-link">PDF</a> : "-"}</td>
+                  <td>
+                    {item.os?.url ? (
+                      <a href={item.os.url} target="_blank" rel="noreferrer" className="os-link">
+                        PDF
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

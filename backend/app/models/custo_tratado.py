@@ -1,3 +1,5 @@
+"""Modelo ORM para custos importados e tratados."""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, Numeric, Text
@@ -7,6 +9,8 @@ from app.db.base import Base
 
 
 class CustoTratado(Base):
+    """Representa um registro de custo processado."""
+
     __tablename__ = "custos_tratados"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

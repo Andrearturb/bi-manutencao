@@ -1,96 +1,85 @@
+/**
+ * Cliente HTTP simples para chamadas ao backend.
+ *
+ * Contém helpers tipados para carregar dashboards, autenticação e operações
+ * administrativas (listar usuários, permissões e upload de planilhas).
+ */
 import { DashboardCustosPayload, DashboardManutencaoPayload, DashboardPayload, TipoManutencao } from "@/lib/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+/** Resposta com os dados do usuário autenticado. */
 export type AuthMeResponse = {
   email: string;
   is_admin_principal: boolean;
   can_import: boolean;
 };
 
+/** Resposta com o modo de autenticação ativo no backend. */
 export type AuthModeResponse = {
   auth_mode: string;
 };
 
+/** Resposta com uma permissão de importação. */
 export type ImportPermissionResponse = {
   email: string;
   granted_by: string;
 };
 
+/** Resposta com acesso consolidado de um usuário. */
 export type UserAccessResponse = {
   email: string;
   is_admin_principal: boolean;
   can_import: boolean;
 };
 
+/** Monta os headers de autorização para chamadas autenticadas. */
 function authHeaders(token: string): HeadersInit {
   return {
     Authorization: `Bearer ${token}`,
   };
 }
 
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, init);
+
+  if (!response.ok) {
+    throw new Error(`Falha na requisição (${response.status})`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function fetchDashboardCorretivas(token: string): Promise<DashboardPayload> {
-  const response = await fetch(`${API_BASE}/dashboard/manutencao`, {
+  return fetchJson<DashboardPayload>(`${API_BASE}/dashboard/manutencao`, {
     cache: "no-store",
     headers: authHeaders(token),
   });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao carregar dashboard (${response.status})`);
-  }
-
-  return response.json() as Promise<DashboardPayload>;
 }
 
 export async function fetchDashboardManutencao(token: string): Promise<DashboardManutencaoPayload> {
-  const response = await fetch(`${API_BASE}/dashboard/manutencao`, {
+  return fetchJson<DashboardManutencaoPayload>(`${API_BASE}/dashboard/manutencao`, {
     cache: "no-store",
     headers: authHeaders(token),
   });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao carregar dashboard manutencao (${response.status})`);
-  }
-
-  return response.json() as Promise<DashboardManutencaoPayload>;
 }
 
 export async function fetchDashboardCustos(token: string): Promise<DashboardCustosPayload> {
-  const response = await fetch(`${API_BASE}/dashboard/custos`, {
+  return fetchJson<DashboardCustosPayload>(`${API_BASE}/dashboard/custos`, {
     cache: "no-store",
     headers: authHeaders(token),
   });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao carregar dashboard custos (${response.status})`);
-  }
-
-  return response.json() as Promise<DashboardCustosPayload>;
 }
 
 export async function fetchAuthMe(token: string): Promise<AuthMeResponse> {
-  const response = await fetch(`${API_BASE}/auth/me`, {
+  return fetchJson<AuthMeResponse>(`${API_BASE}/auth/me`, {
     cache: "no-store",
     headers: authHeaders(token),
   });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao validar acesso (${response.status})`);
-  }
-
-  return response.json() as Promise<AuthMeResponse>;
 }
 
 export async function fetchAuthMode(): Promise<AuthModeResponse> {
-  const response = await fetch(`${API_BASE}/auth/mode`, {
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Falha ao obter modo de autenticacao (${response.status})`);
-  }
-
-  return response.json() as Promise<AuthModeResponse>;
+  return fetchJson<AuthModeResponse>(`${API_BASE}/auth/mode`, { cache: "no-store" });
 }
 
 export async function loginLocal(email: string, password: string): Promise<string> {
@@ -104,7 +93,7 @@ export async function loginLocal(email: string, password: string): Promise<strin
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Falha no login local (${response.status})`);
+    throw new Error(text || "Falha no login local.");
   }
 
   const data = (await response.json()) as { access_token: string };
@@ -118,7 +107,7 @@ export async function listImportPermissions(token: string): Promise<ImportPermis
   });
 
   if (!response.ok) {
-    throw new Error(`Falha ao listar liberacoes (${response.status})`);
+    throw new Error("Falha ao listar liberações.");
   }
 
   const data = (await response.json()) as { items: ImportPermissionResponse[] };
@@ -132,7 +121,7 @@ export async function listUsersAccess(token: string): Promise<UserAccessResponse
   });
 
   if (!response.ok) {
-    throw new Error(`Falha ao listar usuarios (${response.status})`);
+    throw new Error("Falha ao listar usuários.");
   }
 
   const data = (await response.json()) as { items: UserAccessResponse[] };
@@ -151,7 +140,7 @@ export async function grantImportPermission(token: string, email: string): Promi
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Falha ao liberar e-mail (${response.status})`);
+    throw new Error(text || "Falha ao liberar e-mail.");
   }
 
   return response.json() as Promise<ImportPermissionResponse>;
@@ -165,7 +154,7 @@ export async function revokeImportPermission(token: string, email: string): Prom
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Falha ao revogar e-mail (${response.status})`);
+    throw new Error(text || "Falha ao revogar e-mail.");
   }
 }
 
@@ -185,7 +174,7 @@ export async function uploadPlanilhaManutencao(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Falha ao importar planilha (${response.status})`);
+    throw new Error(text || "Falha ao importar planilha.");
   }
 
   return response.json() as Promise<{ mensagem: string }>;

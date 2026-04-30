@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+/**
+ * Provedor de autenticação do frontend.
+ *
+ * Responsável por reidratar sessão, controlar login/logout e expor o contexto `useAuth`.
+ */
+
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { fetchAuthMe, fetchAuthMode, loginLocal } from "@/lib/api";
 import { authConfigured, loginWithMicrosoft, logoutMicrosoft } from "@/lib/auth";
@@ -28,11 +34,13 @@ const TOKEN_STORAGE_KEY = "bi_manutencao_auth_token";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** Lê o token de autenticação salvo no navegador. */
 function readStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
+/** Persiste ou remove o token de autenticação no navegador. */
 function saveStoredToken(token: string | null): void {
   if (typeof window === "undefined") return;
 
@@ -44,6 +52,9 @@ function saveStoredToken(token: string | null): void {
   localStorage.setItem(TOKEN_STORAGE_KEY, token);
 }
 
+/**
+ * Componente provedor que encapsula a aplicação e compartilha estado de autenticação.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
@@ -51,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [authMode, setAuthMode] = useState<"local" | "microsoft">("local");
 
-  async function refreshProfileWithToken(nextToken: string | null) {
+  const refreshProfileWithToken = useCallback(async (nextToken: string | null) => {
     if (!nextToken) {
       setProfile(null);
       return;
@@ -59,9 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const me = await fetchAuthMe(nextToken);
     setProfile(me);
-  }
+  }, []);
 
-  async function refreshProfile() {
+  /** Revalida o perfil usando o token atual armazenado no estado. */
+  const refreshProfile = useCallback(async () => {
     if (!token) {
       setProfile(null);
       return;
@@ -72,15 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(me);
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao validar sessao.";
+      const message = err instanceof Error ? err.message : "Falha ao validar sessão.";
       setError(message);
       setToken(null);
       setProfile(null);
       saveStoredToken(null);
     }
-  }
+  }, [token]);
 
-  async function loginMicrosoft() {
+  /** Realiza login com Microsoft e persiste a sessão localmente. */
+  const loginMicrosoft = useCallback(async () => {
     setLoading(true);
     try {
       const newToken = await loginWithMicrosoft();
@@ -97,9 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [refreshProfileWithToken]);
 
-  async function loginLocalWithPassword(email: string, password: string) {
+  /** Realiza login local com e-mail e senha. */
+  const loginLocalWithPassword = useCallback(async (email: string, password: string) => {
     setLoading(true);
     try {
       const newToken = await loginLocal(email, password);
@@ -116,14 +130,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [refreshProfileWithToken]);
 
-  async function logout() {
+  /** Encerra a sessão local e tenta sair do fluxo Microsoft quando aplicável. */
+  const logout = useCallback(async () => {
     setLoading(true);
     try {
       await logoutMicrosoft();
     } catch {
-      // Ignore logout popup failures and clear local session anyway.
+      // Falhas no popup de logout são ignoradas para garantir limpeza da sessão local.
     } finally {
       saveStoredToken(null);
       setToken(null);
@@ -131,11 +146,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     let active = true;
 
+    /** Carrega o modo de autenticação e reidrata a sessão salva. */
     async function boot() {
       try {
         const modeResponse = await fetchAuthMode();
@@ -165,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
       } catch (err) {
         if (!active) return;
-        const message = err instanceof Error ? err.message : "Sessao invalida.";
+        const message = err instanceof Error ? err.message : "Sessão inválida.";
         setError(message);
         setToken(null);
         setProfile(null);
@@ -195,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refreshProfile,
     }),
-    [authMode, loading, token, profile, error],
+    [authMode, error, loading, loginLocalWithPassword, loginMicrosoft, logout, profile, refreshProfile, token],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

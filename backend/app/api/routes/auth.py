@@ -1,3 +1,5 @@
+"""Rotas de autenticação, perfil do usuário e permissões de importação."""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -29,11 +31,15 @@ router = APIRouter(prefix="/auth", tags=["Autenticacao"])
 
 @router.get("/mode", response_model=AuthModeResponse)
 def get_auth_mode() -> AuthModeResponse:
+    """Retorna o modo de autenticação ativo no backend."""
+
     return AuthModeResponse(auth_mode=settings.auth_mode_normalized)
 
 
 @router.post("/local/login", response_model=LocalLoginResponse)
 def local_login(payload: LocalLoginRequest) -> LocalLoginResponse:
+    """Autentica um usuário local e devolve um token de acesso."""
+
     if settings.auth_mode_normalized != "local":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -57,6 +63,8 @@ def me(
     user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CurrentUserResponse:
+    """Retorna os dados do usuário autenticado atualmente."""
+
     return CurrentUserResponse(
         email=user.email,
         is_admin_principal=user.is_admin_principal,
@@ -69,6 +77,8 @@ def list_import_permissions(
     _: AuthenticatedUser = Depends(require_admin_principal),
     db: Session = Depends(get_db),
 ) -> ImportPermissionListResponse:
+    """Lista as permissões de importação concedidas no sistema."""
+
     repository = ImportPermissionRepository(db)
     rows = repository.list_all()
     items = [
@@ -83,6 +93,8 @@ def list_users(
     _: AuthenticatedUser = Depends(require_admin_principal),
     db: Session = Depends(get_db),
 ) -> UserAccessListResponse:
+    """Lista usuários conhecidos e indica quem pode importar."""
+
     repository = ImportPermissionRepository(db)
     permission_rows = repository.list_all()
     permission_emails = {row.email.strip().lower() for row in permission_rows}
@@ -112,6 +124,8 @@ def grant_import_permission(
     admin_user: AuthenticatedUser = Depends(require_admin_principal),
     db: Session = Depends(get_db),
 ) -> ImportPermissionResponse:
+    """Concede permissão de importação para um e-mail específico."""
+
     email = payload.email.strip().lower()
     repository = ImportPermissionRepository(db)
 
@@ -131,6 +145,8 @@ def revoke_import_permission(
     _: AuthenticatedUser = Depends(require_admin_principal),
     db: Session = Depends(get_db),
 ) -> dict:
+    """Remove a permissão de importação de um e-mail específico."""
+
     normalized_email = email.strip().lower()
     repository = ImportPermissionRepository(db)
     deleted = repository.delete_by_email(normalized_email)

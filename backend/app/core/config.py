@@ -1,7 +1,11 @@
+"""Configurações da aplicação e auxiliares de parsing de variáveis de ambiente."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Configurações centralizadas carregadas de variáveis de ambiente."""
+
     app_name: str = "BI Manutenção API"
     app_version: str = "0.1.0"
     database_url: str
@@ -15,20 +19,33 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        """Retorna as origens CORS como uma lista normalizada."""
+        return [
+            origin.strip()
+            for origin in self.cors_origins.split(",")
+            if origin.strip()
+        ]
 
     @property
     def admin_principal_email_normalized(self) -> str:
+        """Retorna o e-mail do admin principal em formato canônico."""
         return self.admin_principal_email.strip().lower()
 
     @property
     def auth_mode_normalized(self) -> str:
+        """Retorna o modo de autenticação em formato canônico minúsculo."""
         return self.auth_mode.strip().lower()
 
     @property
     def local_users_map(self) -> dict[str, str]:
+        """Analisa usuários locais do ambiente e mapeia e-mail para senha."""
+        return self._parse_local_users(self.local_users)
+
+    @staticmethod
+    def _parse_local_users(raw_users: str) -> dict[str, str]:
+        """Analisa usuários separados por ponto-e-vírgula da string de ambiente."""
         users: dict[str, str] = {}
-        for chunk in self.local_users.split(";"):
+        for chunk in raw_users.split(";"):
             pair = chunk.strip()
             if not pair or ":" not in pair:
                 continue

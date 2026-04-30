@@ -1,3 +1,5 @@
+"""Modelo ORM para chamados de manutenção importados e tratados."""
+
 from sqlalchemy import DateTime, Numeric, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -5,6 +7,8 @@ from app.db.base import Base
 
 
 class ChamadoTratado(Base):
+    """Representa um chamado de manutenção processado."""
+
     __tablename__ = "chamados_tratados"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

@@ -1,9 +1,25 @@
+"""Serviço responsável por formatar payloads de resposta do dashboard."""
+
 from datetime import datetime
 from typing import Any
 
 
 class DashboardService:
-    """Responsável por montar o JSON final do dashboard."""
+    """Constrói payloads da API do dashboard a partir de registros do repositório."""
+
+    @staticmethod
+    def _to_iso(value: Any) -> str | None:
+        """Converte valores datetime para string ISO-8601 quando presentes."""
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return None
+
+    @staticmethod
+    def _to_float(value: Any) -> float | None:
+        """Converte valores numéricos para float quando presentes."""
+        if value is None:
+            return None
+        return float(value)
 
     def montar_json_dashboard(
         self,
@@ -11,6 +27,7 @@ class DashboardService:
         nome_arquivo: str,
         upload_data: datetime,
     ) -> dict[str, Any]:
+        """Constrói resposta completa do dashboard com metadados."""
         dados = [self._montar_item_dashboard(registro) for registro in registros]
 
         return {
@@ -23,6 +40,7 @@ class DashboardService:
         }
 
     def _montar_item_dashboard(self, registro: dict[str, Any]) -> dict[str, Any]:
+        """Mapeia um registro bruto para o schema público do dashboard."""
         return {
             "ticket": registro.get("ticket"),
             "status": registro.get("status"),
@@ -49,24 +67,8 @@ class DashboardService:
                 if registro.get("os_status")
                 else None
             ),
-            "dataRequisicao": (
-                registro["data_requisicao"].isoformat()
-                if registro.get("data_requisicao")
-                else None
-            ),
-            "dataConclusao": (
-                registro["data_conclusao"].isoformat()
-                if registro.get("data_conclusao")
-                else None
-            ),
-            "createdOn": (
-                registro["created_on"].isoformat()
-                if registro.get("created_on")
-                else None
-            ),
-            "valorAprovado": (
-                float(registro["valor_aprovado"])
-                if registro.get("valor_aprovado") is not None
-                else None
-            ),
+            "dataRequisicao": self._to_iso(registro.get("data_requisicao")),
+            "dataConclusao": self._to_iso(registro.get("data_conclusao")),
+            "createdOn": self._to_iso(registro.get("created_on")),
+            "valorAprovado": self._to_float(registro.get("valor_aprovado")),
         }

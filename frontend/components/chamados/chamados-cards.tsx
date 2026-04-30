@@ -1,3 +1,5 @@
+/** Cartões e campos reutilizáveis da área de chamados. */
+
 import { FilterState } from "@/lib/types";
 
 type SelectFieldProps = {
@@ -31,6 +33,7 @@ type KpiCardProps = {
   onClick?: () => void;
 };
 
+/** Cartão principal de KPI com suporte a clique e acessibilidade por teclado. */
 export function KpiCard({ title, value, subtitle, onClick }: KpiCardProps) {
   return (
     <article

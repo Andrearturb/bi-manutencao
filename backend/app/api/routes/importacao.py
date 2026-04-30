@@ -1,3 +1,5 @@
+"""Rotas de importação de planilhas e atualização das bases."""
+
 from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
@@ -20,6 +22,8 @@ async def importar_manutencao(
     arquivo: UploadFile = File(...),
     _: AuthenticatedUser = Depends(require_import_permission),
 ) -> ImportacaoResponse:
+    """Importa uma planilha de manutenção corretiva ou preventiva."""
+
     if not arquivo.filename.endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Arquivo inválido. Envie um Excel.")
 
@@ -39,6 +43,8 @@ async def importar_base_lojas(
     arquivo: UploadFile = File(...),
     _: AuthenticatedUser = Depends(require_import_permission),
 ) -> ImportacaoResponse:
+    """Importa a base de lojas de referência a partir de uma planilha."""
+
     if not arquivo.filename.endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Arquivo inválido. Envie um Excel.")
 
@@ -68,6 +74,8 @@ async def importar_referencias(
     arquivo: UploadFile = File(...),
     _: AuthenticatedUser = Depends(require_import_permission),
 ) -> ImportacaoResponse:
+    """Importa referências de lojas usando o mesmo fluxo da base de lojas."""
+
     if not arquivo.filename.endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Arquivo inválido. Envie um Excel.")
 
@@ -100,6 +108,8 @@ async def importar_custos(
     arquivo: UploadFile = File(...),
     _: AuthenticatedUser = Depends(require_import_permission),
 ) -> ImportacaoResponse:
+    """Importa uma planilha de custos e atualiza o cache consolidado."""
+
     if not arquivo.filename.endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Arquivo inválido. Envie um Excel.")
 

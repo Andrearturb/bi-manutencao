@@ -1,3 +1,5 @@
+/** Tabelas de ranking reutilizáveis para o painel de chamados. */
+
 import { Fragment } from "react";
 
 import { type RankRow } from "@/lib/hooks/use-chamados-dashboard";
@@ -15,7 +17,7 @@ export function LojaTable({ rows, onOpenLoja }: LojaTableProps) {
         <thead>
           <tr>
             <th>Loja</th>
-            <th>QTD</th>
+            <th>Qtd.</th>
             <th>%</th>
           </tr>
         </thead>
@@ -59,7 +61,7 @@ export function CategoryTable({
         <thead>
           <tr>
             <th>Categoria</th>
-            <th>QTD</th>
+            <th>Qtd.</th>
             <th>%</th>
           </tr>
         </thead>

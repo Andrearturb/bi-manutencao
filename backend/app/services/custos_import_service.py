@@ -1,3 +1,5 @@
+"""Serviço de leitura e normalização de planilhas de custos."""
+
 from io import BytesIO
 import re
 import unicodedata
@@ -11,6 +13,8 @@ from app.repositories.loja_referencia_repository import LojaReferenciaRepository
 
 
 class CustosImportService:
+    """Lê planilhas de custos e converte registros para o formato tratado."""
+
     ALIASES = {
         "sap": ["sap", "divisao", "divisão", "id sap", "codigo sap", "referencia sap", "id_sap"],
         "divisao": ["divisao", "divisão"],
@@ -49,9 +53,13 @@ class CustosImportService:
     }
 
     def __init__(self, loja_repository: LojaReferenciaRepository) -> None:
+        """Recebe o repositório de lojas para enriquecer os registros."""
+
         self.loja_repository = loja_repository
 
     def ler_registros(self, file_bytes: bytes) -> list[dict[str, Any]]:
+        """Extrai e normaliza registros de custos a partir de uma planilha."""
+
         dataframe = pd.read_excel(BytesIO(file_bytes), dtype=object)
         indice = self._montar_indice_colunas(dataframe)
 
@@ -131,6 +139,8 @@ class CustosImportService:
         return registros
 
     def _montar_indice_colunas(self, dataframe: pd.DataFrame) -> dict[str, str]:
+        """Cria um índice de colunas normalizadas para facilitar lookup."""
+
         indice: dict[str, str] = {}
         for coluna in dataframe.columns:
             nome = "" if coluna is None else str(coluna)
@@ -140,6 +150,8 @@ class CustosImportService:
         return indice
 
     def _resolver_coluna(self, indice: dict[str, str], campo: str) -> str | None:
+        """Encontra a coluna correspondente a um campo lógico da planilha."""
+
         for alias in self.ALIASES.get(campo, []):
             chave = self._normalizar_chave(alias)
             if chave in indice:
@@ -147,12 +159,16 @@ class CustosImportService:
         return None
 
     def _normalizar_chave(self, valor: str) -> str:
+        """Remove acentos e padroniza uma chave textual para comparação."""
+
         texto = unicodedata.normalize("NFKD", valor)
         texto = "".join(char for char in texto if not unicodedata.combining(char))
         texto = texto.strip().lower()
         return " ".join(texto.split())
 
     def _normalizar_texto(self, valor: Any) -> str | None:
+        """Limpa textos vazios e normaliza espaçamento."""
+
         if valor is None:
             return None
         texto = str(valor).strip()
@@ -161,6 +177,8 @@ class CustosImportService:
         return re.sub(r"\s+", " ", texto)
 
     def _extrair_numeros(self, valor: Any) -> str | None:
+        """Extrai apenas a parte numérica útil de uma descrição ou texto."""
+
         texto = self._normalizar_texto(valor)
         if not texto:
             return None
@@ -175,6 +193,8 @@ class CustosImportService:
         return numeros or None
 
     def _normalizar_sap(self, valor: Any) -> str | None:
+        """Normaliza o SAP removendo decimais gerados por exportação Excel."""
+
         texto = self._normalizar_texto(valor)
         if not texto:
             return None
@@ -183,6 +203,8 @@ class CustosImportService:
         return texto
 
     def _parse_decimal(self, valor: Any) -> Decimal | None:
+        """Converte valores monetários para Decimal com tolerância a formato BR."""
+
         texto = self._normalizar_texto(valor)
         if not texto:
             return None
@@ -199,6 +221,8 @@ class CustosImportService:
             return None
 
     def _parse_data(self, valor: Any) -> datetime | None:
+        """Converte múltiplos formatos de data em um datetime ou retorna None."""
+
         if valor is None:
             return None
         if isinstance(valor, datetime):

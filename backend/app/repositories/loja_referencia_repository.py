@@ -1,3 +1,5 @@
+"""Repositório para persistência de dados de lojas de referência."""
+
 from datetime import datetime
 
 from sqlalchemy import delete, select
@@ -7,10 +9,14 @@ from app.models.loja_referencia import LojaReferencia
 
 
 class LojaReferenciaRepository:
+    """Gerencia operações de CRUD para lojas de referência."""
+
     def __init__(self, db: Session) -> None:
+        """Inicializa repositório com sessão de banco de dados."""
         self.db = db
 
     def substituir_todas(self, registros: list[dict]) -> None:
+        """Remove todas as lojas e insere novo lote de referências."""
         self.db.execute(delete(LojaReferencia))
 
         for registro in registros:
@@ -27,10 +33,12 @@ class LojaReferenciaRepository:
         self.db.commit()
 
     def obter_por_sap(self, sap: str) -> LojaReferencia | None:
+        """Obtém uma loja pelo código SAP."""
         statement = select(LojaReferencia).where(LojaReferencia.sap == sap)
         return self.db.execute(statement).scalar_one_or_none()
 
     def obter_por_saps(self, saps: list[str]) -> dict[str, LojaReferencia]:
+        """Obtém múltiplas lojas pelos códigos SAP, retornando um mapa."""
         if not saps:
             return {}
 
@@ -39,5 +47,6 @@ class LojaReferenciaRepository:
         return {loja.sap: loja for loja in lojas}
 
     def listar_todas(self) -> list[LojaReferencia]:
+        """Lista todas as lojas ordenadas por nome."""
         statement = select(LojaReferencia).order_by(LojaReferencia.nome_loja.asc())
         return list(self.db.scalars(statement).all())

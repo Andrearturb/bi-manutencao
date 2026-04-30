@@ -1,3 +1,5 @@
+"""Rotas de suporte para inspeção rápida do estado do backend."""
+
 from fastapi import APIRouter
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -11,6 +13,8 @@ router = APIRouter(prefix="/debug", tags=["Debug"])
 
 @router.get("/contagem")
 def debug_contagem() -> dict:
+    """Retorna contagens úteis para verificar persistência e cache."""
+
     db: Session = SessionLocal()
 
     try:

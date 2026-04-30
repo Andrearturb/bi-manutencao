@@ -1,3 +1,5 @@
+"""Modelo ORM para referências de lojas."""
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Text
@@ -7,6 +9,8 @@ from app.db.base import Base
 
 
 class LojaReferencia(Base):
+    """Representa uma loja derefência com informações SAP."""
+
     __tablename__ = "lojas_referencia"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)

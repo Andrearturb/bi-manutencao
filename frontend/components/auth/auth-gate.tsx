@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 
+/** Garante que o usuário veja a tela correta conforme o estado de autenticação. */
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { loading, token, error, authMode, isConfigured, loginMicrosoft, loginLocal } = useAuth();
   const [email, setEmail] = useState("admin@local.test");
@@ -12,7 +13,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (!isConfigured) {
     return (
       <main className="center-message error">
-        Login Microsoft nao configurado. Defina as variaveis NEXT_PUBLIC_AZURE_CLIENT_ID e NEXT_PUBLIC_AZURE_TENANT_ID.
+        Login Microsoft não configurado. Defina as variáveis NEXT_PUBLIC_AZURE_CLIENT_ID e NEXT_PUBLIC_AZURE_TENANT_ID.
       </main>
     );
   }
@@ -25,11 +26,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <main className="auth-entry">
         <section className="auth-card">
-          <h1>Acesso ao App</h1>
+          <h1>Acesso ao sistema</h1>
           <p>
             {authMode === "microsoft"
-              ? "Entre com seu e-mail Microsoft corporativo para visualizar o app."
-              : "Use seu login local de desenvolvimento para acessar o app."}
+              ? "Entre com seu e-mail Microsoft corporativo para visualizar o sistema."
+              : "Use seu login local de desenvolvimento para acessar o sistema."}
           </p>
           {error ? <p className="auth-error">{error}</p> : null}
           {authMode === "microsoft" ? (
@@ -46,7 +47,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             >
               <input
                 type="email"
-                placeholder="email"
+                placeholder="e-mail"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
               />

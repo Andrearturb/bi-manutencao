@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Página administrativa de usuários.
+ *
+ * Permite ao admin principal listar usuários, liberar ou revogar permissão de importação.
+ */
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -13,6 +19,7 @@ import {
   type UserAccessResponse,
 } from "@/lib/api";
 
+/** Tela administrativa para gestão de usuários e permissões de importação. */
 export default function AdminUsuariosPage() {
   const { token, profile, logout } = useAuth();
 
@@ -46,7 +53,7 @@ export default function AdminUsuariosPage() {
       setPermissions(permissionsData);
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao carregar usuarios.";
+      const message = err instanceof Error ? err.message : "Falha ao carregar usuários.";
       setError(message);
     } finally {
       setLoading(false);
@@ -68,7 +75,7 @@ export default function AdminUsuariosPage() {
       setEmailInput("");
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao liberar usuario.";
+      const message = err instanceof Error ? err.message : "Falha ao liberar usuário.";
       setError(message);
     } finally {
       setSaving(false);
@@ -84,7 +91,7 @@ export default function AdminUsuariosPage() {
       await refreshData();
       setError(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Falha ao revogar usuario.";
+      const message = err instanceof Error ? err.message : "Falha ao revogar usuário.";
       setError(message);
     } finally {
       setSaving(false);
@@ -93,17 +100,18 @@ export default function AdminUsuariosPage() {
 
   return (
     <main className="admin-shell">
+      {/* Cabeçalho: navegação administrativa e ações */}
       <header className="admin-header card">
         <div>
-          <h1>Painel de Usuarios</h1>
-          <p>Gestao de permissoes de importacao para {profile?.email ?? "admin"}.</p>
+          <h1>Painel de usuários</h1>
+          <p>Gestão de permissões de importação para {profile?.email ?? "admin"}.</p>
         </div>
         <div className="admin-header-actions">
           <Link href="/admin/importacao" className="admin-link-btn">
-            Ir para Importacao
+            Ir para importação
           </Link>
           <Link href="/chamados" className="admin-link-btn">
-            Dashboard
+            Painel
           </Link>
           <button type="button" className="auth-logout-btn" onClick={() => void logout()}>
             Sair
@@ -113,12 +121,13 @@ export default function AdminUsuariosPage() {
 
       {!isPrincipalAdmin ? (
         <section className="card admin-section">
+          {/* Aviso: acesso restrito ao admin principal */}
           <p className="auth-error">Somente o admin principal pode acessar este painel.</p>
         </section>
       ) : (
         <>
           <section className="card admin-section">
-            <h2>Liberar novo usuario</h2>
+            <h2>Liberar novo usuário</h2>
             <div className="permission-form">
               <input
                 type="email"
@@ -132,16 +141,16 @@ export default function AdminUsuariosPage() {
                 disabled={!emailInput.trim() || saving}
                 onClick={() => void handleGrant(emailInput.trim())}
               >
-                Liberar importacao
+                Liberar importação
               </button>
             </div>
             {error ? <p className="auth-error">{error}</p> : null}
           </section>
 
           <section className="card admin-section">
-            <h2>Usuarios e permissoes</h2>
-            {loading ? <p>Carregando usuarios...</p> : null}
-            {!loading && users.length === 0 ? <p>Nenhum usuario encontrado.</p> : null}
+            <h2>Usuários e permissões</h2>
+            {loading ? <p>Carregando usuários...</p> : null}
+            {!loading && users.length === 0 ? <p>Nenhum usuário encontrado.</p> : null}
             {!loading && users.length > 0 ? (
               <div className="users-table-wrap">
                 <table className="users-table">
@@ -149,8 +158,8 @@ export default function AdminUsuariosPage() {
                     <tr>
                       <th>E-mail</th>
                       <th>Tipo</th>
-                      <th>Importacao</th>
-                      <th>Acao</th>
+                      <th>Importação</th>
+                      <th>Ação</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -159,7 +168,7 @@ export default function AdminUsuariosPage() {
                       return (
                         <tr key={user.email}>
                           <td>{user.email}</td>
-                          <td>{user.is_admin_principal ? "Admin principal" : "Usuario"}</td>
+                          <td>{user.is_admin_principal ? "Admin principal" : "Usuário"}</td>
                           <td>{user.can_import ? "Liberado" : "Sem acesso"}</td>
                           <td>
                             {user.is_admin_principal ? (

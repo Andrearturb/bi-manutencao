@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Hook `useCustosDashboard` — encapsula a view-model para a página de custos.
+ *
+ * Fornece filtros, métricas agregadas, rankings e dados de upload.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 
 import { fetchDashboardCustos } from "@/lib/api";
@@ -81,7 +87,7 @@ export function useCustosDashboard(token: string | null) {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
-  const dadosCustos = dashboard.dadosCustos ?? [];
+  const dadosCustos = useMemo(() => dashboard.dadosCustos ?? [], [dashboard]);
 
   const tipoOptions = ["corretiva", "preventiva"];
 
@@ -174,7 +180,7 @@ export function useCustosDashboard(token: string | null) {
 
   const uploadData = dashboard.uploadCustos?.uploadData
     ? new Date(dashboard.uploadCustos.uploadData).toLocaleString("pt-BR")
-    : "Sem atualizacao";
+    : "Sem atualização";
 
   return {
     loading,

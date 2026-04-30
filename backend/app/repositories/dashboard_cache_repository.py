@@ -1,3 +1,5 @@
+"""Repositório para cache de dados do dashboard."""
+
 from datetime import datetime, timezone
 
 from sqlalchemy import delete, select
@@ -7,9 +9,10 @@ from app.models.dashboard_cache import DashboardCache
 
 
 class DashboardCacheRepository:
-    """Responsável por salvar e recuperar o cache do dashboard."""
+    """Gerencia persistência e recuperação de cache do dashboard."""
 
     def __init__(self, db: Session) -> None:
+        """Inicializa repositório com sessão de banco de dados."""
         self.db = db
 
     def salvar(
@@ -18,6 +21,7 @@ class DashboardCacheRepository:
         json_dados: dict,
         upload_data: datetime,
     ) -> None:
+        """Substitui o cache de um módulo por dados mais recentes."""
         self.db.execute(
             delete(DashboardCache).where(DashboardCache.nome_modulo == nome_modulo)
         )
@@ -33,6 +37,7 @@ class DashboardCacheRepository:
         self.db.commit()
 
     def obter_por_modulo(self, nome_modulo: str) -> dict | None:
+        """Recupera dados em cache de um módulo específico."""
         query = select(DashboardCache).where(DashboardCache.nome_modulo == nome_modulo)
         resultado = self.db.execute(query).scalar_one_or_none()
 
