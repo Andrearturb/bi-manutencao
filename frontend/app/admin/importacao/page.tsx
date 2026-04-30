@@ -13,11 +13,13 @@ import {
   type ImportPermissionResponse,
   type UserAccessResponse,
 } from "@/lib/api";
+import { type TipoManutencao } from "@/lib/types";
 
 export default function AdminImportacaoPage() {
   const { token, profile, logout } = useAuth();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [tipoManutencao, setTipoManutencao] = useState<TipoManutencao>("corretiva");
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -65,7 +67,7 @@ export default function AdminImportacaoPage() {
     setUploadMessage(null);
 
     try {
-      const response = await uploadPlanilhaManutencao(token, selectedFile);
+      const response = await uploadPlanilhaManutencao(token, selectedFile, tipoManutencao);
       setUploadMessage(response.mensagem ?? "Importacao concluida com sucesso.");
       setSelectedFile(null);
     } catch (err) {
@@ -132,6 +134,16 @@ export default function AdminImportacaoPage() {
           <p className="auth-error">Seu e-mail ainda nao possui liberacao de importacao.</p>
         ) : (
           <>
+            <label className="select-field" style={{ maxWidth: 320 }}>
+              <span>Tipo de manutencao</span>
+              <select
+                value={tipoManutencao}
+                onChange={(event) => setTipoManutencao(event.target.value as TipoManutencao)}
+              >
+                <option value="corretiva">Corretiva</option>
+                <option value="preventiva">Preventiva</option>
+              </select>
+            </label>
             <input
               type="file"
               accept=".xlsx,.xls"

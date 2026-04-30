@@ -1,7 +1,7 @@
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 
 import { type StatusModalKey } from "@/components/chamados/chamados-detalhes-modal";
-import { fetchDashboardCorretivas } from "@/lib/api";
+import { fetchDashboardManutencao } from "@/lib/api";
 import {
   calcCustoMedio,
   calcSlaMetrics,
@@ -14,7 +14,7 @@ import {
   parseDate,
   uniqueOptions,
 } from "@/lib/dashboard-utils";
-import { type DashboardPayload, type FilterState } from "@/lib/types";
+import { type DashboardManutencaoPayload, type DashboardPayload, type EscopoPainel, type FilterState } from "@/lib/types";
 
 const DEFAULT_FILTERS: FilterState = {
   status: "todos",
@@ -51,7 +51,8 @@ function normalize(value: string | null | undefined): string {
 
 export function useChamadosDashboard(token: string | null) {
   // UI state (filters, interactions and modal visibility)
-  const [dashboard, setDashboard] = useState<DashboardPayload | null>(null);
+  const [dashboardManutencao, setDashboardManutencao] = useState<DashboardManutencaoPayload | null>(null);
+  const [escopoPainel, setEscopoPainel] = useState<EscopoPainel>("corretiva");
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [totalModalOpen, setTotalModalOpen] = useState(false);
   const [totalOsModalOpen, setTotalOsModalOpen] = useState(false);
@@ -70,12 +71,12 @@ export function useChamadosDashboard(token: string | null) {
         setLoading(true);
         if (!token) {
           setError("Sessao nao encontrada.");
-          setDashboard(null);
+          setDashboardManutencao(null);
           return;
         }
 
-        const data = await fetchDashboardCorretivas(token);
-        setDashboard(data);
+        const data = await fetchDashboardManutencao(token);
+        setDashboardManutencao(data);
         setError(null);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Erro ao carregar o dashboard.";
@@ -88,10 +89,97 @@ export function useChamadosDashboard(token: string | null) {
     void load();
   }, [token]);
 
+  const dashboard = useMemo<DashboardPayload>(() => {
+    const emptyPayload: DashboardPayload = {
+      dados: [],
+      sla: {},
+      upload: {},
+    };
+
+    if (!dashboardManutencao) return emptyPayload;
+
+    if (escopoPainel === "corretiva") {
+      return {
+        dados: dashboardManutencao.dadosCorretivas ?? [],
+        sla: {},
+        upload: dashboardManutencao.uploadCorretivas ?? {},
+      };
+    }
+
+    if (escopoPainel === "preventiva") {
+      return {
+        dados: dashboardManutencao.dadosPreventivas ?? [],
+        sla: {},
+        upload: dashboardManutencao.uploadPreventivas ?? {},
+      };
+    }
+
+    const dadosCorretivo = dashboardManutencao.dadosCorretivas ?? [];
+    const dadosPreventivo = dashboardManutencao.dadosPreventivas ?? [];
+    const uploadCorretivo = dashboardManutencao.uploadCorretivas ?? {};
+    const uploadPreventivo = dashboardManutencao.uploadPreventivas ?? {};
+
+    return {
+      dados: [...dadosCorretivo, ...dadosPreventivo],
+      sla: {},
+      upload: {
+        uploadData: uploadCorretivo.uploadData ?? uploadPreventivo.uploadData,
+        nomeArquivo:
+          uploadCorretivo.nomeArquivo && uploadPreventivo.nomeArquivo
+            ? `${uploadCorretivo.nomeArquivo} | ${uploadPreventivo.nomeArquivo}`
+            : (uploadCorretivo.nomeArquivo ?? uploadPreventivo.nomeArquivo),
+        totalRegistros: (uploadCorretivo.totalRegistros ?? 0) + (uploadPreventivo.totalRegistros ?? 0),
+      },
+    };
+  }, [dashboardManutencao, escopoPainel]);
+
   // Filter options and data slices
   const dados = dashboard?.dados ?? [];
 
-  const statusOptions = useMemo(() => uniqueOptions(dados, (item) => item.status), [dados]);
+  const statusOptions = useMemo(() => {
+    const options = uniqueOptions(dados, (item) => item.status);
+
+    const prioridadePorEscopo: Record<EscopoPainel, string[]> = {
+      corretiva: [
+        "Em aberto",
+        "Em atendimento",
+        "Nao Aprovado",
+        "Solicitacao Finalizada",
+      ],
+      preventiva: [
+        "Backlog",
+        "Em atendimento",
+        "Nao Aprovado",
+        "Servico Finalizado",
+      ],
+      ambas: [
+        "Em aberto",
+        "Backlog",
+        "Em atendimento",
+        "Nao Aprovado",
+        "Solicitacao Finalizada",
+        "Servico Finalizado",
+      ],
+    };
+
+    const prioridade = prioridadePorEscopo[escopoPainel].map(normalize);
+
+    return [...options].sort((a, b) => {
+      const aNorm = normalize(a);
+      const bNorm = normalize(b);
+
+      const idxA = prioridade.indexOf(aNorm);
+      const idxB = prioridade.indexOf(bNorm);
+
+      const temA = idxA !== -1;
+      const temB = idxB !== -1;
+      if (temA && temB) return idxA - idxB;
+      if (temA) return -1;
+      if (temB) return 1;
+
+      return a.localeCompare(b, "pt-BR");
+    });
+  }, [dados, escopoPainel]);
   const lojaOptions = useMemo(() => uniqueOptions(dados, (item) => item.loja), [dados]);
   const pracaOptions = useMemo(() => uniqueOptions(dados, (item) => item.praca), [dados]);
   const categoriaOptions = useMemo(() => uniqueOptions(dados, (item) => item.categoria), [dados]);
@@ -154,11 +242,29 @@ export function useChamadosDashboard(token: string | null) {
   const custoMedio = calcCustoMedio(filtered);
   const slaMetrics = calcSlaMetrics(filtered);
 
-  const statusEmAberto = countStatus(filtered, "Em aberto");
+  const statusEmAberto = filtered.filter((item) => {
+    const status = normalize(item.status);
+    return status === "em aberto" || status === "backlog";
+  }).length;
   const statusEmAtendimento = countStatus(filtered, "Em atendimento");
   const statusNaoAprovado = countStatus(filtered, "Nao Aprovado");
-  const statusSolicitacaoFinalizada = countStatus(filtered, "Solicitacao Finalizada");
+  const statusSolicitacaoFinalizada = filtered.filter((item) => {
+    const status = normalize(item.status);
+    return status === "solicitacao finalizada" || status === "servico finalizado";
+  }).length;
   const statusConcluidos = countConcluidos(filtered);
+  const statusAbertoLabel =
+    escopoPainel === "preventiva"
+      ? "Backlog"
+      : escopoPainel === "corretiva"
+        ? "Em aberto"
+        : "Em aberto / Backlog";
+  const statusFinalizadoLabel =
+    escopoPainel === "preventiva"
+      ? "Servico Finalizado"
+      : escopoPainel === "corretiva"
+        ? "Solicitacao Finalizada"
+        : "Finalizados";
 
   const lojasRank = countBy(filtered, (item) => item.loja ?? "Sem loja").slice(0, 8);
   const categoriasRank = countBy(filtered, (item) => item.categoria ?? "Sem categoria").slice(0, 8);
@@ -280,16 +386,23 @@ export function useChamadosDashboard(token: string | null) {
 
     const isConcluido = (value: string | null | undefined) => {
       const status = normalize(value);
-      return status === "chamado concluido" || status === "concluido" || status === "solicitacao finalizada";
+      return (
+        status === "chamado concluido" ||
+        status === "concluido" ||
+        status === "solicitacao finalizada" ||
+        status === "servico finalizado"
+      );
     };
 
     return filtered.filter((item) => {
       const status = normalize(item.status);
 
-      if (statusModal.key === "em-aberto") return status === "em aberto";
+      if (statusModal.key === "em-aberto") return status === "em aberto" || status === "backlog";
       if (statusModal.key === "em-atendimento") return status === "em atendimento";
       if (statusModal.key === "nao-aprovado") return status === "nao aprovado";
-      if (statusModal.key === "solicitacao-finalizada") return status === "solicitacao finalizada";
+      if (statusModal.key === "solicitacao-finalizada") {
+        return status === "solicitacao finalizada" || status === "servico finalizado";
+      }
       return isConcluido(item.status);
     });
   }, [filtered, statusModal]);
@@ -306,6 +419,8 @@ export function useChamadosDashboard(token: string | null) {
   return {
     loading,
     error,
+    escopoPainel,
+    setEscopoPainel,
     filters,
     updateFilter,
     statusOptions,
@@ -318,10 +433,12 @@ export function useChamadosDashboard(token: string | null) {
     totalOS,
     custoMedio,
     slaMetrics,
+    statusAbertoLabel,
     statusEmAberto,
     statusEmAtendimento,
     statusNaoAprovado,
     statusSolicitacaoFinalizada,
+    statusFinalizadoLabel,
     statusConcluidos,
     lojasRank,
     categoriasRank,

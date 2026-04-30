@@ -14,7 +14,10 @@ from app.services.excel_import_service import ExcelImportService
 class ImportacaoManutencaoService:
     """Responsável pelo fluxo completo de importação da manutenção."""
 
-    NOME_MODULO = "manutencao"
+    MODULO_POR_TIPO = {
+        "corretiva": "manutencao_corretiva",
+        "preventiva": "manutencao_preventiva",
+    }
 
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -24,14 +27,22 @@ class ImportacaoManutencaoService:
         self.chamado_repository = ChamadoRepository(db)
         self.dashboard_cache_repository = DashboardCacheRepository(db)
 
-    async def executar(self, arquivo: UploadFile) -> ImportacaoResponse:
+    async def executar(self, arquivo: UploadFile, tipo: str) -> ImportacaoResponse:
+        if tipo not in self.MODULO_POR_TIPO:
+            raise ValueError("Tipo de manutenção inválido.")
+
         conteudo = await arquivo.read()
-        registros = self.excel_import_service.ler_registros(conteudo)
+        registros = self.excel_import_service.ler_registros(
+            conteudo,
+            tipo_esperado=tipo,
+        )
 
         upload_data = datetime.now(timezone.utc)
+        nome_modulo = self.MODULO_POR_TIPO[tipo]
 
         self.chamado_repository.substituir_todos(
             registros=registros,
+            tipo_manutencao=tipo,
             nome_arquivo=arquivo.filename,
             upload_data=upload_data,
         )
@@ -43,7 +54,7 @@ class ImportacaoManutencaoService:
         )
 
         self.dashboard_cache_repository.salvar(
-            nome_modulo=self.NOME_MODULO,
+            nome_modulo=nome_modulo,
             json_dados=json_dashboard,
             upload_data=upload_data,
         )

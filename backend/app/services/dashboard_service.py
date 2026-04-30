@@ -13,21 +13,8 @@ class DashboardService:
     ) -> dict[str, Any]:
         dados = [self._montar_item_dashboard(registro) for registro in registros]
 
-        atrasado = sum(
-            1 for registro in registros if registro.get("sla_status") == "Atrasado"
-        )
-        no_prazo = sum(
-            1 for registro in registros if registro.get("sla_status") == "NoPrazo"
-        )
-        total = atrasado + no_prazo
-
         return {
             "dados": dados,
-            "sla": {
-                "noPrazo": no_prazo,
-                "atrasado": atrasado,
-                "total": total,
-            },
             "upload": {
                 "uploadData": upload_data.isoformat(),
                 "nomeArquivo": nome_arquivo,
@@ -43,6 +30,7 @@ class DashboardService:
             "colunaDRaw": registro.get("coluna_d_raw"),
             "slaStatus": registro.get("sla_status"),
             "loja": registro.get("loja"),
+            "localAtendimento": registro.get("local_atendimento"),
             "praca": registro.get("praca"),
             "categoria": registro.get("categoria"),
             "subcategoria": registro.get("subcategoria"),
@@ -51,6 +39,8 @@ class DashboardService:
             "fornecedor": registro.get("fornecedor"),
             "descricaoServico": registro.get("descricao_servico"),
             "solucao": registro.get("solucao"),
+            "statusAssinatura": registro.get("status_assinatura"),
+            "statusOrdemServico": registro.get("status_ordem_servico"),
             "os": (
                 {
                     "status": registro.get("os_status"),
@@ -67,6 +57,11 @@ class DashboardService:
             "dataConclusao": (
                 registro["data_conclusao"].isoformat()
                 if registro.get("data_conclusao")
+                else None
+            ),
+            "createdOn": (
+                registro["created_on"].isoformat()
+                if registro.get("created_on")
                 else None
             ),
             "valorAprovado": (

@@ -12,6 +12,7 @@ import { AnalystDonutCard, MonthlyBarsCard } from "@/components/chamados/chamado
 import { ChamadosModalsLayer } from "@/components/chamados/chamados-modals-layer";
 import { CategoryTable, LojaTable } from "@/components/chamados/chamados-rank-tables";
 import { useChamadosDashboard } from "@/lib/hooks/use-chamados-dashboard";
+import { type EscopoPainel } from "@/lib/types";
 
 export default function ChamadosPage() {
   const { token, profile, logout } = useAuth();
@@ -19,6 +20,8 @@ export default function ChamadosPage() {
   const {
     loading,
     error,
+    escopoPainel,
+    setEscopoPainel,
     filters,
     updateFilter,
     statusOptions,
@@ -31,10 +34,12 @@ export default function ChamadosPage() {
     totalOS,
     custoMedio,
     slaMetrics,
+    statusAbertoLabel,
     statusEmAberto,
     statusEmAtendimento,
     statusNaoAprovado,
     statusSolicitacaoFinalizada,
+    statusFinalizadoLabel,
     statusConcluidos,
     lojasRank,
     categoriasRank,
@@ -83,11 +88,12 @@ export default function ChamadosPage() {
           <h1 className="brand">Gentil Negocios</h1>
           <button className="menu-highlight">Paineis</button>
           <nav className="menu">
-            <a className="menu-item" href="#">Inicio</a>
-            <a className="menu-item" href="#">Chamados Preventivas</a>
-            <a className="menu-item active" href="#">Chamados Corretivas</a>
-            <a className="menu-item" href="#">Custos</a>
-            <a className="menu-item" href="#">Monitoramento</a>
+            <button type="button" className={`menu-item menu-button ${escopoPainel === "ambas" ? "active" : ""}`} onClick={() => setEscopoPainel("ambas")}>Inicio</button>
+            <button type="button" className={`menu-item menu-button ${escopoPainel === "preventiva" ? "active" : ""}`} onClick={() => setEscopoPainel("preventiva")}>Chamados Preventivas</button>
+            <button type="button" className={`menu-item menu-button ${escopoPainel === "corretiva" ? "active" : ""}`} onClick={() => setEscopoPainel("corretiva")}>Chamados Corretivas</button>
+            <Link className="menu-item" href="/custos">
+              Custos
+            </Link>
             {profile?.can_import || profile?.is_admin_principal ? (
               <Link className="menu-item" href="/admin/importacao">
                 Area Administrativa
@@ -106,6 +112,17 @@ export default function ChamadosPage() {
 
       <section className="content">
         <header className="filters-grid card">
+          <label className="select-field">
+            <span>Tipo de manutencao</span>
+            <select
+              value={escopoPainel}
+              onChange={(event) => setEscopoPainel(event.target.value as EscopoPainel)}
+            >
+              <option value="corretiva">Corretiva</option>
+              <option value="preventiva">Preventiva</option>
+              <option value="ambas">Ambas</option>
+            </select>
+          </label>
           <SelectField label="Status do Chamado" value={filters.status} onChange={(value) => updateFilter("status", value)} options={statusOptions} />
           <SelectField label="Loja" value={filters.loja} onChange={(value) => updateFilter("loja", value)} options={lojaOptions} />
           <SelectField label="Praca" value={filters.praca} onChange={(value) => updateFilter("praca", value)} options={pracaOptions} />
@@ -126,10 +143,18 @@ export default function ChamadosPage() {
         </section>
 
         <section className="kpi-grid status-kpis">
-          <MiniKpi title="Em aberto" value={statusEmAberto} onClick={() => setStatusModal({ key: "em-aberto", titulo: "Em aberto" })} />
+          <MiniKpi
+            title={statusAbertoLabel}
+            value={statusEmAberto}
+            onClick={() => setStatusModal({ key: "em-aberto", titulo: statusAbertoLabel })}
+          />
           <MiniKpi title="Em atendimento" value={statusEmAtendimento} onClick={() => setStatusModal({ key: "em-atendimento", titulo: "Em atendimento" })} />
           <MiniKpi title="Nao Aprovado" value={statusNaoAprovado} onClick={() => setStatusModal({ key: "nao-aprovado", titulo: "Nao Aprovado" })} />
-          <MiniKpi title="Solicitacao Finalizada" value={statusSolicitacaoFinalizada} onClick={() => setStatusModal({ key: "solicitacao-finalizada", titulo: "Solicitacao Finalizada" })} />
+          <MiniKpi
+            title={statusFinalizadoLabel}
+            value={statusSolicitacaoFinalizada}
+            onClick={() => setStatusModal({ key: "solicitacao-finalizada", titulo: statusFinalizadoLabel })}
+          />
           <MiniKpi title="Concluidos" value={statusConcluidos} emphasis onClick={() => setStatusModal({ key: "concluidos", titulo: "Concluidos" })} />
         </section>
 

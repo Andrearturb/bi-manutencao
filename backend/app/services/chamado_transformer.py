@@ -14,6 +14,17 @@ class ChamadoTransformer:
     STATUS_QUE_ENTRAM_NO_SLA = {
         "chamado concluido",
         "solicitacao finalizada",
+        "servico finalizado",
+    }
+
+    STATUS_NORMALIZADOS = {
+        "em atendimento": "Em atendimento",
+        "nao aprovado": "Nao Aprovado",
+        "não aprovado": "Nao Aprovado",
+        "servico finalizado": "Servico Finalizado",
+        "servico concluido": "Servico Finalizado",
+        "serviço finalizado": "Servico Finalizado",
+        "serviço concluido": "Servico Finalizado",
     }
 
     def normalizar_texto(self, valor: Any) -> str | None:
@@ -55,6 +66,14 @@ class ChamadoTransformer:
             texto = texto.split(" - ", 1)[1].strip()
 
         return texto
+
+    def normalizar_status(self, valor: Any) -> str | None:
+        texto = self.normalizar_texto(valor)
+        if not texto:
+            return None
+
+        chave = self.normalizar_comparacao(texto)
+        return self.STATUS_NORMALIZADOS.get(chave, texto)
 
     def parse_data(self, valor: Any) -> datetime | None:
         if valor is None:
@@ -176,6 +195,30 @@ class ChamadoTransformer:
 
         return (status, url)
 
+    def parse_status_assinatura(self, valor: Any) -> str | None:
+        texto = self.normalizar_texto(valor)
+        if not texto:
+            return None
+
+        status_normalizado = self.normalizar_comparacao(texto)
+        if "conclu" in status_normalizado or "complet" in status_normalizado:
+            return "concluido"
+        if "pend" in status_normalizado or "aguard" in status_normalizado:
+            return "pendente"
+
+        return texto
+
+    def extrair_url(self, valor: Any) -> str | None:
+        texto = self.normalizar_texto(valor)
+        if not texto:
+            return None
+
+        match = re.search(r"https?://\S+", texto)
+        if match is None:
+            return None
+
+        return match.group(0).rstrip(".,;)")
+
     def status_entra_no_sla(self, status: Any) -> bool:
         status_normalizado = self.normalizar_comparacao(status)
         return status_normalizado in self.STATUS_QUE_ENTRAM_NO_SLA
@@ -193,18 +236,43 @@ class ChamadoTransformer:
 
     def transformar_registro(self, row: dict[str, Any]) -> dict[str, Any]:
         coluna_d_raw = row.get("coluna_d_raw")
-        status = row.get("status")
+        status = self.normalizar_status(row.get("status"))
         os_status, os_url = self.parse_os_info(row.get("os_raw"))
+        status_assinatura = self.normalizar_texto(row.get("status_assinatura"))
+        status_ordem_servico = self.normalizar_texto(row.get("status_ordem_servico"))
+
+        if os_status is None and status_assinatura:
+            assinatura_status, assinatura_url = self.parse_os_info(status_assinatura)
+            os_status = assinatura_status or self.parse_status_assinatura(status_assinatura)
+            os_url = assinatura_url
+
+        if os_status is None and status_ordem_servico:
+            os_status = self.parse_status_assinatura(status_ordem_servico)
+
+        if os_url is None and os_status == "concluido":
+            os_url = self.extrair_url(status_ordem_servico)
+        if os_url is None and os_status == "concluido":
+            os_url = self.extrair_url(row.get("pdf_view"))
+
+        # O link da OS so e exposto quando a assinatura foi concluida.
+        if os_status != "concluido":
+            os_url = None
+
+        loja = self.limpar_loja(row.get("loja"))
+        local_atendimento = self.limpar_loja(row.get("local_atendimento"))
+        if loja is None:
+            loja = local_atendimento
 
         return {
             "ticket": self.normalizar_texto(row.get("ticket")),
-            "status": self.normalizar_texto(status),
+            "status": status,
             "motivo_nao_aprovacao": self.normalizar_texto(
                 row.get("motivo_nao_aprovacao")
             ),
             "coluna_d_raw": self.normalizar_texto(coluna_d_raw),
             "sla_status": self.calcular_sla_status(coluna_d_raw, status),
-            "loja": self.limpar_loja(row.get("loja")),
+            "loja": loja,
+            "local_atendimento": local_atendimento,
             "praca": self.normalizar_texto(row.get("praca")),
             "categoria": self.normalizar_texto(row.get("categoria")),
             "subcategoria": self.normalizar_texto(row.get("subcategoria")),
@@ -215,9 +283,12 @@ class ChamadoTransformer:
             "fornecedor": self.limpar_fornecedor(row.get("fornecedor")),
             "descricao_servico": self.normalizar_texto(row.get("descricao_servico")),
             "solucao": self.normalizar_texto(row.get("solucao")),
+            "status_assinatura": status_assinatura,
+            "status_ordem_servico": status_ordem_servico,
             "os_status": os_status,
             "os_url": os_url,
             "data_requisicao": self.parse_data(row.get("data_requisicao")),
             "data_conclusao": self.parse_data(row.get("data_conclusao")),
+            "created_on": self.parse_data(row.get("created_on")),
             "valor_aprovado": self.parse_decimal(row.get("valor_aprovado")),
         }

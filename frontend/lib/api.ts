@@ -1,4 +1,4 @@
-import { DashboardPayload } from "@/lib/types";
+import { DashboardCustosPayload, DashboardManutencaoPayload, DashboardPayload, TipoManutencao } from "@/lib/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -40,6 +40,32 @@ export async function fetchDashboardCorretivas(token: string): Promise<Dashboard
   }
 
   return response.json() as Promise<DashboardPayload>;
+}
+
+export async function fetchDashboardManutencao(token: string): Promise<DashboardManutencaoPayload> {
+  const response = await fetch(`${API_BASE}/dashboard/manutencao`, {
+    cache: "no-store",
+    headers: authHeaders(token),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha ao carregar dashboard manutencao (${response.status})`);
+  }
+
+  return response.json() as Promise<DashboardManutencaoPayload>;
+}
+
+export async function fetchDashboardCustos(token: string): Promise<DashboardCustosPayload> {
+  const response = await fetch(`${API_BASE}/dashboard/custos`, {
+    cache: "no-store",
+    headers: authHeaders(token),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha ao carregar dashboard custos (${response.status})`);
+  }
+
+  return response.json() as Promise<DashboardCustosPayload>;
 }
 
 export async function fetchAuthMe(token: string): Promise<AuthMeResponse> {
@@ -143,11 +169,15 @@ export async function revokeImportPermission(token: string, email: string): Prom
   }
 }
 
-export async function uploadPlanilhaManutencao(token: string, file: File): Promise<{ mensagem: string }> {
+export async function uploadPlanilhaManutencao(
+  token: string,
+  file: File,
+  tipo: TipoManutencao,
+): Promise<{ mensagem: string }> {
   const formData = new FormData();
   formData.append("arquivo", file);
 
-  const response = await fetch(`${API_BASE}/importar/manutencao`, {
+  const response = await fetch(`${API_BASE}/importar/manutencao?tipo=${encodeURIComponent(tipo)}`, {
     method: "POST",
     headers: authHeaders(token),
     body: formData,

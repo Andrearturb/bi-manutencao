@@ -11,6 +11,7 @@ class ChamadoTratado(Base):
 
     upload_data: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     nome_arquivo: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tipo_manutencao: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     ticket: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -21,6 +22,7 @@ class ChamadoTratado(Base):
     sla_status: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     loja: Mapped[str | None] = mapped_column(Text, nullable=True)
+    local_atendimento: Mapped[str | None] = mapped_column(Text, nullable=True)
     praca: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     categoria: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -33,10 +35,13 @@ class ChamadoTratado(Base):
 
     descricao_servico: Mapped[str | None] = mapped_column(Text, nullable=True)
     solucao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status_assinatura: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status_ordem_servico: Mapped[str | None] = mapped_column(Text, nullable=True)
     os_status: Mapped[str | None] = mapped_column(Text, nullable=True)
     os_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     data_requisicao: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
     data_conclusao: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
+    created_on: Mapped[DateTime | None] = mapped_column(DateTime, nullable=True)
 
     valor_aprovado: Mapped[float | None] = mapped_column(Numeric(14, 2), nullable=True)

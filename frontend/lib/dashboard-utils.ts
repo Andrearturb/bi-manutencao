@@ -4,6 +4,7 @@ const STATUS_ENCERRADOS = [
   "chamado concluido",
   "concluido",
   "solicitacao finalizada",
+  "servico finalizado",
 ];
 
 function normalize(value: string | null | undefined): string {

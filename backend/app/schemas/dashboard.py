@@ -9,3 +9,15 @@ class DashboardResponse(BaseModel):
     dados: List[ChamadoResponse]
     sla: Dict[str, Any]
     upload: Dict[str, Any]
+
+
+class DashboardManutencaoResponse(BaseModel):
+    dadosCorretivas: List[ChamadoResponse]
+    dadosPreventivas: List[ChamadoResponse]
+    uploadCorretivas: Dict[str, Any]
+    uploadPreventivas: Dict[str, Any]
+
+
+class DashboardCustosResponse(BaseModel):
+    dadosCustos: List[Dict[str, Any]]
+    uploadCustos: Dict[str, Any]

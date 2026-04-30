@@ -14,6 +14,7 @@ class ChamadoBase(BaseModel):
     slaStatus: Optional[str] = None
 
     loja: Optional[str] = None
+    localAtendimento: Optional[str] = None
     praca: Optional[str] = None
 
     categoria: Optional[str] = None
@@ -26,11 +27,14 @@ class ChamadoBase(BaseModel):
 
     descricaoServico: Optional[str] = None
     solucao: Optional[str] = None
+    statusAssinatura: Optional[str] = None
+    statusOrdemServico: Optional[str] = None
 
     os: Optional[dict[str, Optional[str]]] = None
 
     dataRequisicao: Optional[datetime] = None
     dataConclusao: Optional[datetime] = None
+    createdOn: Optional[datetime] = None
 
     valorAprovado: Optional[float] = None
 

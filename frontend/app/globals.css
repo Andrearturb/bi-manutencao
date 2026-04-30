@@ -157,6 +157,19 @@ h4 {
   font-size: 0.95rem;
 }
 
+.menu-button {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item-disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 .menu-item.active,
 .menu-item:hover {
   background: rgba(255, 255, 255, 0.14);
@@ -827,6 +840,81 @@ h4 {
   color: #184862;
 }
 
+.custos-filters-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.custos-main-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.custos-secondary-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.custos-data-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 1fr 1.1fr;
+}
+
+.custos-table {
+  max-height: 430px;
+}
+
+.custos-bars-card {
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.custos-bars-card h3 {
+  color: #12415e;
+  text-align: center;
+}
+
+.custos-bars-wrap {
+  max-height: 430px;
+  overflow: auto;
+  display: grid;
+  gap: 0.45rem;
+  padding-right: 0.2rem;
+}
+
+.custos-bar-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(160px, 2fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.custos-bar-label {
+  font-size: 0.88rem;
+  color: #1c4563;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.custos-bar-track {
+  height: 0.95rem;
+  background: #deebf5;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid #cadbea;
+}
+
+.custos-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1f5f86, #2e84ba);
+}
+
+.custos-bar-value {
+  font-weight: 700;
+  color: #1c4c69;
+  font-size: 0.88rem;
+}
+
 .period-filter-pill {
   display: block;
   margin: 0 auto 0.4rem;
@@ -913,6 +1001,19 @@ h4 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .custos-filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .custos-main-kpis,
+  .custos-secondary-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .custos-data-grid {
+    grid-template-columns: 1fr;
+  }
+
   .top-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -937,6 +1038,17 @@ h4 {
 
   .filters-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .custos-filters-grid,
+  .custos-main-kpis,
+  .custos-secondary-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .custos-bar-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
   }
 
   .admin-header {
